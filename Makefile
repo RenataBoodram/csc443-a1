@@ -17,7 +17,7 @@ CFLAGS = -g -Wall #-ansi -D_DEBUG_ -D_GNU_SOURCE $(ARCH)
 
 HDRS = part1.h
 
-part1 : write_blocks_seq.c write_blocks_seq.o part1.h 
+write_blocks_seq : write_blocks_seq.c write_blocks_seq.o part1.h 
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
