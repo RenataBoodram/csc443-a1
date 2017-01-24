@@ -53,7 +53,9 @@ int main(int argc, char *argv[])
                 }  
             }
             printf("Current line: %s", line);    
-            Record *rec = line_to_record(line);
+            char *str_arr[2];
+            parse_line(line, str_arr);
+            Record *rec = line_to_record(str_arr);
             printf("Record uid1: %d, uid2: %d\n", rec->uid1, rec->uid2);
             memcpy(buffer + (total_records * rec_size), (const void *) rec, 
                    rec_size);
@@ -72,27 +74,24 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-Record *line_to_record(char *line) {
+/* Returns array of strings given a file line. */
+void parse_line(char *line, char *str_arr[])
+{
     const char *delim = ",";
-    Record *rec = malloc(rec_size);
-    int line_len = strlen(line);
-    char *line_copy = malloc(sizeof(char) * line_len);
-    strncpy(line_copy, line, line_len); 
+    char *val = strtok(line, delim);
 
-    // Initialize str_arr where each string has max len equal to total line
-    // len excluding the comma, divded by 2 for 2 IDs.
-    //char str_arr[2][(line_len - 1)/2];
-    char *str_arr[2];
-    char *val = strtok(line_copy, delim);
     int i = 0;
-    while (val != NULL) {
+    while (val)
+    {
         str_arr[i] = val;
         val = strtok(NULL, delim);
         i++;
     }
+}
 
+Record *line_to_record(char *str_arr[]) {
+    Record *rec = malloc(rec_size);
     rec->uid1 = (int) strtol(str_arr[0], (char **)NULL, 10);
     rec->uid2 = (int) strtol(str_arr[1], (char **)NULL, 10);
-    free(line_copy);
     return rec;
 }
