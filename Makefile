@@ -1,4 +1,4 @@
-all : write_blocks_seq 
+all : write_blocks_seq write_lines
 
 CC = gcc
 
@@ -17,8 +17,11 @@ CFLAGS = -g -Wall #-ansi -D_DEBUG_ -D_GNU_SOURCE $(ARCH)
 
 HDRS = part1.h
 
-write_blocks_seq : write_blocks_seq.c write_blocks_seq.o part1.h 
+write_blocks_seq : write_blocks_seq.c write_blocks_seq.o $(HDRS) 
+	$(CC) $(CFLAGS) $< -o $@
+
+write_lines : write_lines.c write_lines.o $(HDRS)
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm -f *.o part1
+	rm -f *.o write_blocks_seq write_lines

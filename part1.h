@@ -5,4 +5,9 @@ typedef struct record {
     int uid2;
 } Record;
 
-Record *line_to_record(char *line);
+enum {
+    rec_size = sizeof(Record),
+};
+
+Record *line_to_record(char *str_arr[]);
+void parse_line(char *line, char *str_arr[]);
