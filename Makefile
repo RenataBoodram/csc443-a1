@@ -1,6 +1,12 @@
 all : write_blocks_seq write_lines
 
 CC = gcc
+CFLAGS = -O3 -Wall 
+CFLAGS += -D_LARGEFILE_SOURCE
+CFLAGS += -fno-exceptions
+CFLAGS += -finline-functions
+CFLAGS += -funroll-loops
+CFLAGS += -D_FILE_OFFSET_BITS=64
 
 OSTYPE = $(shell uname)
 
@@ -13,7 +19,7 @@ ARCH = -D_LINUX_
 SOCK = -lnsl -lresolv
 endif
 
-CFLAGS = -g -Wall #-ansi -D_DEBUG_ -D_GNU_SOURCE $(ARCH)
+#CFLAGS = -g -Wall #-ansi -D_DEBUG_ -D_GNU_SOURCE $(ARCH)
 
 HDRS = part1.h
 
