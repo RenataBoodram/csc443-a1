@@ -1,4 +1,4 @@
-all : write_blocks_seq write_lines read_ram_seq
+all : write_blocks_seq write_lines read_ram_seq write_blocks_rand
 
 CC = gcc
 CFLAGS = -O3 -Wall 
@@ -23,14 +23,23 @@ endif
 
 HDRS = part1.h
 
-write_blocks_seq : write_blocks_seq.c write_blocks_seq.o $(HDRS) 
+#utils.o : utils.o $(HDRS)
+#	$(CC) -c $(CFLAGS) $<
+
+write_blocks_seq : utils.o write_blocks_seq.c write_blocks_seq.o $(HDRS) 
 	$(CC) $(CFLAGS) $< -o $@
 
-write_lines : write_lines.c write_lines.o $(HDRS)
+write_lines : utils.o write_lines.c write_lines.o $(HDRS)
 	$(CC) $(CFLAGS) $< -o $@
 
 read_ram_seq : read_ram_seq.c read_ram_seq.o read_ram_seq.h
 	$(CC) $(CFLAGS) $< -o $@
 
+write_blocks_rand : write_blocks_rand.c write_blocks_rand.o $(HDRS) 
+	$(CC) $(CFLAGS) $< -o $@
+
+utils.o : utils.c $(HDRS)
+	$(CC) -c $(CFLAGS) $<
+
 clean:
-	rm -f *.o write_blocks_seq write_lines read_ram_seq
+	rm -f *.o write_blocks_seq write_lines read_ram_seq write_blocks_rand
