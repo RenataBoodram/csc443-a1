@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
         if (recs_so_far == records_per_block)
         {
             printf("Writing buffer...\n");
-            handle_fread_fwrite(1, "fwrite", buffer, rec_size, recs_so_far,
+            handle_fread_fwrite(recs_so_far, "fwrite", buffer, rec_size, recs_so_far,
                 output_file);
             fflush(output_file);               
             recs_so_far = 0;
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     // Flush remaining buffer
     if (recs_so_far != 0)
     {
-        handle_fread_fwrite(1, "fwrite", buffer, rec_size, recs_so_far,
+        handle_fread_fwrite(recs_so_far, "fwrite", buffer, rec_size, recs_so_far,
             output_file);
         fflush(output_file); 
     }
