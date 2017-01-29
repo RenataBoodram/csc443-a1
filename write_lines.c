@@ -7,18 +7,20 @@
 
 int main(int argc, char *argv[])
 {
-    const char *usage_msg = "Usage: write_lines <input filename>\n";
+    const char *usage_msg = "Usage: write_lines <input filename> " 
+        "<output filename>\n";
     char *input_file;
+    char *output_filename;
  
-    if (argc != 2) {
+    if (argc != 3) {
         printf("%s", usage_msg);
         exit(1);
     } else {
         input_file = argv[1];
+        output_filename = argv[2];
     }
 
     FILE *file = fopen(input_file, "r");
-    const char *output_filename = "records.csv";
     FILE *output_file = fopen(output_filename, "w");
 
     if (!file)
@@ -26,6 +28,7 @@ int main(int argc, char *argv[])
         printf("Input file could not be opened for reading. Terminating.\n");
         exit(1);
     }
+
     if (!output_file)
     {
         printf("Output file could not be opened for writing. Terminating\n");
@@ -43,16 +46,14 @@ int main(int argc, char *argv[])
     ftime(&t_begin);
     while ((read = getline(&line, &n, file)) != -1) 
     {
-        //line [strcspn (line, "\r\n")] = '\0'; // remove end-of-line characters
+        int line_len = strlen(line);
         total_bytes += (long) strlen(line);
-        printf("Writing line %s", line);
-        //printf("total_bytes: %ld\n", total_bytes);
-        //printf("SIZE OF LINE: %zu\n", strlen(line));
-        fwrite(line, strlen(line), 1, output_file);
+        //printf("Writing line %s", line);
+        handle_fread_fwrite(line_len, "fwrite", line, 1, line_len, output_file);
     } 
+    ftime(&t_end);
     fclose(output_file);
     fclose(file);
-    ftime(&t_end);
 
     long time_spent_ms;
     time_spent_ms = (long) (1000 *(t_end.time - t_begin.time)

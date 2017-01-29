@@ -7,8 +7,8 @@
 
 int main(int argc, char *argv[])
 {
-    const char *usage_msg = "Usage: write_blocks_seq <input filename> <block \
-                             size in bytes>.\n";
+    const char *usage_msg = "Usage: write_blocks_seq <input filename> <block "
+                             "size in bytes>.\n";
     char *input_file; // Input filename
     int block_size = 0;
     int records_per_block = 0;
@@ -19,9 +19,9 @@ int main(int argc, char *argv[])
     } else {
         input_file = argv[1];
         block_size = (long) strtol(argv[2], (char **)NULL, 10);
-        //printf("BLOCK SIZE: %d\n", block_size);
+        printf("BLOCK SIZE: %d\n", block_size);
         records_per_block = block_size / rec_size;
-        //printf("RECORDS_PER_BLOCK %d\n", records_per_block);
+        printf("RECORDS_PER_BLOCK %d\n", records_per_block);
     }
     const char *output_filename = "records.dat"; 
     FILE *file = fopen(input_file, "r");
@@ -56,11 +56,12 @@ int main(int argc, char *argv[])
         if (recs_so_far == records_per_block)
         {
             printf("Writing buffer...\n");
-            fwrite(buffer, rec_size, total_records, output_file);
+            handle_fread_fwrite(1, "fwrite", buffer, rec_size, recs_so_far,
+                output_file);
             fflush(output_file);               
             recs_so_far = 0;
         }
-        printf("Current line: %s", line);    
+        //printf("Current line: %s\n", line);    
         char *str_arr[2];
         parse_line(line, str_arr);
         Record *rec = line_to_record(str_arr);
@@ -70,40 +71,25 @@ int main(int argc, char *argv[])
         free(rec);
         recs_so_far++;
         total_records++;
-    } 
+    }
 
+    // Flush remaining buffer
+    if (recs_so_far != 0)
+    {
+        handle_fread_fwrite(1, "fwrite", buffer, rec_size, recs_so_far,
+            output_file);
+        fflush(output_file); 
+    }
+    ftime(&t_end);
     fclose(output_file); 
     fclose(file);
-    ftime(&t_end);
     free(buffer);
 
     long time_spent_ms;
     time_spent_ms = (long) (1000 *(t_end.time - t_begin.time)
         + (t_end.millitm - t_begin.millitm));
-    printf ("Data rate: %.3f BPS\n", ((total_records*rec_size)/(float)time_spent_ms * 1000));
+    printf ("Data rate: %.3f BPS\n", 
+        ((total_records*rec_size)/(float)time_spent_ms * 1000));
 
     return 0;
-}
-
-/* Returns array of strings given a file line. */
-void parse_line(char *line, char *str_arr[])
-{
-    const char *delim = ",";
-    char *val = strtok(line, delim);
-
-    int i = 0;
-    while (val)
-    {
-        str_arr[i] = val;
-        val = strtok(NULL, delim);
-        i++;
-    }
-}
-
-Record *line_to_record(char *str_arr[])
-{
-    Record *rec = malloc(rec_size);
-    rec->uid1 = (int) strtol(str_arr[0], (char **)NULL, 10);
-    rec->uid2 = (int) strtol(str_arr[1], (char **)NULL, 10);
-    return rec;
 }

@@ -43,6 +43,12 @@ int main(int argc, char *argv[])
 
     // Total number of records in file
     int num_of_recs = file_size / rec_size;
+
+    // Allocate a buffer
+    Record *buffer = malloc(rec_size * num_of_recs);
+    // Load the entire file into the "RAM" buffer
+    handle_fread_fwrite((rec_size * num_of_recs), "fread", buffer, 1, 
+        (rec_size * num_of_recs), file); 
     
     srand(time(NULL)); // Initialize random seed
     int i = 0;
@@ -55,23 +61,18 @@ int main(int argc, char *argv[])
     {
         // Choose a random record number in interval [0, num_of_recs - 1].
         rec_num = rand() % num_of_recs; 
+        printf("Record chosen: %ld\n", rec_num);
     
-        printf("Record %ld chosen\n", rec_num);
-        // Seek to the start of the record
-        handle_fseek(file, (rec_num * rec_size), SEEK_SET);
-        // Read one record
-        printf("first offset: %ld\n", ftell(file));
-        handle_fread_fwrite(rec_size, "fread", rec, 1, rec_size, file);
+        // Overwrite record
+        memcpy(rec, (buffer + rec_num), rec_size); 
+        memcpy((buffer + rec_num), rec, rec_size);
         printf("Record uid1: %d, uid2: %d\n", rec->uid1, rec->uid2);
-        // Write the same record (first move the pointer back)
-        handle_fseek(file, -rec_size, SEEK_CUR);
-        printf("Using %ld\n", ftell(file));
-        handle_fread_fwrite(rec_size, "fwrite", rec, 1, rec_size, file);
         
         i++;
     }
     ftime(&t_end);
     free(rec);
+    free(buffer);
     fclose(file);
     long time_spent_ms;
     time_spent_ms = (long) (1000 *(t_end.time - t_begin.time)

@@ -41,24 +41,23 @@ void handle_fread_fwrite(int bytes, const char *func, void *ptr, size_t size,
         bytes_used = fwrite(ptr, size, nmemb, stream);
     }
 
-    if ((bytes_used != -1) && (bytes_used != bytes))
+    if ((bytes_used != -1) && ((bytes_used != bytes) || (bytes_used == 0)))
     {
-        printf("%s returned %d bytes when %d was expected.\n", func, bytes_used, bytes);
+        printf("%s returned %d bytes when %d was expected. Exiting.\n", 
+            func, bytes_used, bytes);
+        free(ptr);
+        fclose(stream);
+        exit(1);
     }
 
 }
 
-/* Wraper function to handle fseek errors. */
+/* Wrapper function to handle fseek errors. */
 void handle_fseek(FILE *stream, long offset, int whence)
 {
     int result = fseek(stream, offset, whence);
     if (result == -1)
     {
-        printf("fseek failed to %ld\n", offset);
+        printf("fseek failed to seek in file by %ld offset.\n", offset); 
     }
-}
-
-int main(int argc, char *argv[])
-{
-    return 0;
 }
