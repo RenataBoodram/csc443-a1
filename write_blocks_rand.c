@@ -48,6 +48,8 @@ int main(int argc, char *argv[])
     int i = 0;
     long rec_num = 0;
     Record *rec = malloc(rec_size);
+    rec->uid1 = 1;
+    rec->uid2 = 2;
     struct timeb t_begin, t_end;
 
     ftime(&t_begin);
@@ -59,13 +61,7 @@ int main(int argc, char *argv[])
         printf("Record %ld chosen\n", rec_num);
         // Seek to the start of the record
         handle_fseek(file, (rec_num * rec_size), SEEK_SET);
-        // Read one record
-        printf("first offset: %ld\n", ftell(file));
-        handle_fread_fwrite(rec_size, "fread", rec, 1, rec_size, file);
-        printf("Record uid1: %d, uid2: %d\n", rec->uid1, rec->uid2);
-        // Write the same record (first move the pointer back)
-        handle_fseek(file, -rec_size, SEEK_CUR);
-        printf("Using %ld\n", ftell(file));
+        // Write the dummy record
         handle_fread_fwrite(rec_size, "fwrite", rec, 1, rec_size, file);
         
         i++;

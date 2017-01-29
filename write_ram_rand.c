@@ -54,6 +54,8 @@ int main(int argc, char *argv[])
     int i = 0;
     long rec_num = 0;
     Record *rec = malloc(rec_size);
+    rec->uid1 = 1;
+    rec->uid2 = 2;
     struct timeb t_begin, t_end;
 
     ftime(&t_begin);
@@ -64,7 +66,6 @@ int main(int argc, char *argv[])
         printf("Record chosen: %ld\n", rec_num);
     
         // Overwrite record
-        memcpy(rec, (buffer + rec_num), rec_size); 
         memcpy((buffer + rec_num), rec, rec_size);
         printf("Record uid1: %d, uid2: %d\n", rec->uid1, rec->uid2);
         
