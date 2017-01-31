@@ -19,7 +19,7 @@ ARCH = -D_LINUX_
 SOCK = -lnsl -lresolv
 endif
 
-SOURCES = write_blocks_seq.c write_lines.c write_blocks_rand.c
+SOURCES = write_blocks_seq.c write_lines.c write_blocks_rand.c read_blocks_seq read_ram_seq.c 
 HDRS = part1.h
 
 utils : $(SOURCES) utils.c
@@ -31,8 +31,11 @@ write_blocks_seq : write_blocks_seq.o utils.o
 write_lines : write_lines.o utils.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-read_ram_seq : read_ram_seq.c read_ram_seq.o read_ram_seq.h
-	$(CC) $(CFLAGS) $< -o $@
+read_blocks_seq : read_blocks_seq.o utils.o
+	$(CC) $(CFLAGS) $^ -o $@
+
+read_ram_seq : read_ram_seq.o utils.o
+	$(CC) $(CFLAGS) $^ -o $@
 
 write_blocks_rand : write_blocks_rand.o utils.o
 	$(CC) $(CFLAGS) $^ -o $@
@@ -41,4 +44,4 @@ write_ram_rand : write_ram_rand.o utils.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 clean:
-	rm -f *.o write_blocks_seq write_lines read_ram_seq write_blocks_rand write_ram_rand
+	rm -f *.o write_blocks_seq write_lines read_blocks_seq read_ram_seq write_blocks_rand write_ram_rand
