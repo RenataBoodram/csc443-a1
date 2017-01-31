@@ -5,6 +5,12 @@
 #include <unistd.h>
 #include "part1.h"
 
+/*
+ * Program:        write_blocks_seq 
+ * Description:    Read from a CSV file up to specified block size before
+ *                 writing buffer to records.dat
+ * Authors:        boodram8, phamtyle
+ */
 int main(int argc, char *argv[])
 {
     const char *usage_msg = "Usage: write_blocks_seq <input filename> <block "
@@ -19,6 +25,12 @@ int main(int argc, char *argv[])
     } else {
         input_file = argv[1];
         block_size = (long) strtol(argv[2], (char **)NULL, 10);
+	if ((block_size % rec_size) != 0)
+	{
+	    printf("Block size %d is not a multiple of record size %d."
+	        "Exiting.\n", block_size, rec_size);
+            exit(1);
+	}
         printf("BLOCK SIZE: %d\n", block_size);
         records_per_block = block_size / rec_size;
         printf("RECORDS_PER_BLOCK %d\n", records_per_block);
@@ -89,7 +101,7 @@ int main(int argc, char *argv[])
     time_spent_ms = (long) (1000 *(t_end.time - t_begin.time)
         + (t_end.millitm - t_begin.millitm));
     printf ("Data rate: %.3f BPS\n", 
-        ((total_records*rec_size)/(float)time_spent_ms * 1000));
+        ((total_records*rec_size)/(float)time_spent_ms * 1000)/(1024*1024));
 
     return 0;
 }

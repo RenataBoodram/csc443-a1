@@ -1,28 +1,26 @@
-// 2.3 Sequential Reads
-
-// TODO
-// 1.read binary record file in blocks
-// 2. return the user who is following the most amount of people [max]
-// 3. return the average of each users following
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "part1.h"
-//#include "read_ram_seq.h"
+
+/*
+ * Program:        read_ram_seq 
+ * Description:    Read from a binary file stored in a RAM buffer. 
+ * Authors:        boodram8, phamtyle
+ */
 
 int main(int argc, char *argv[])
 {
-    const char *usage_msg = "Usage: read_ram_seq <filename>\n";
+    const char *usage_msg = "Usage: read_ram_seq <input filename>\n";
     char *input_file;
     int block_size = 0;
  
-    if (argc != 2) {
+    if (argc != 2)
+    {
         printf("%s", usage_msg);
         exit(1);
-    } 
-    else {
+    } else {
         input_file = argv[1];
     }
 
@@ -32,9 +30,6 @@ int main(int argc, char *argv[])
         printf("Unable to open file for reading. Exiting.\n");
         exit(1); 
     }
-    ssize_t read;
-    char *line = NULL;
-    size_t n = 0;
     
     int total_follows = 0;
     int unique_users = 0;
@@ -47,35 +42,33 @@ int main(int argc, char *argv[])
     float avg_num_followed = 0;
   
     // Calculate size of the binary file
-    handle_fseek(file, 0L, SEEK_END);
-    int file_size = ftell(file);
-    if (file_size == -1)
-    {
-        printf("Error when determing file size. Exiting.\n");
-        fclose(file);
-        exit(1);
-    }
-    rewind(file); 
+    int file_size = find_file_size(file);
 
     // Total number of records in file
-    int records_per_block = file_size / rec_size;
+    int total_recs = file_size / rec_size;
 
     // Allocate a buffer
-    Record *buffer = (Record *) calloc(records_per_block, rec_size);
+    Record *buffer = (Record *) calloc(total_recs, rec_size);
     // Load the entire file into the "RAM" buffer
-    handle_fread_fwrite((rec_size * records_per_block), "fread", buffer, 1,
-        (rec_size * records_per_block), file);
+    handle_fread_fwrite((rec_size * total_recs), "fread", buffer, 1,
+        (rec_size * total_recs), file);
 
-    if (file){
         //int i = 0;
-        int num_recs = 0;
+        //int num_recs = 0;
         //while ((num_recs = fread(buffer, 1, block_size, file)) != 0)
         //{
-            int i = 0;
-            printf("NUM_OF_RECS: %d\n", (num_recs / rec_size));
-            while (i < records_per_block)
-            {
-                printf("Record uid1: %d, Record uid2: %d\n", buffer[i].uid1, buffer[i].uid2); 
+    int i = 0;
+    struct timeb t_begin, t_end;
+    ftime(&t_begin);
+    get_max_avg(buffer, total_recs, unique_users, total_follows, 
+        max_user_follow_count);
+    ftime(&t_end);
+          //  printf("NUM_OF_RECS: %d\n", (num_recs / rec_size));
+	    // get_max_avg(buffer, total_recs, unique_users, total_follows, max_user_follow_count);
+	    /*
+    while (i < total_recs)
+    {
+        printf("Record uid1: %d, Record uid2: %d\n", buffer[i].uid1, buffer[i].uid2); 
               
                 //if new user, then increment unqiue users 
                 //and reset follower counter back to 1
@@ -96,20 +89,25 @@ int main(int argc, char *argv[])
                 total_follows++;
                 i++;
             } 
-
+*/
 
        // }
 
-    } else {
-        printf("File %s could not be found. Exiting.\n", input_file);
-        exit(1);
-    }
 
     avg_num_followed = (float)total_follows/unique_users;
+    free(buffer);
     fclose(file);
 
     printf("Parsed %d, lines of data. \n", total_follows);
     printf("The most people followed is: %d. \n", max_user_follow_count);
     printf("Average number of follows is: %.2f. \n", avg_num_followed);
+    printf("Max: %d\n", max_user_follow_count);
+    printf("Average: %.2f\n" avg_num_followed);
+    long time_spent_ms;
+    time_spent_ms = (long) (1000 *(t_end.time - t_begin.time)
+        + (t_end.millitm - t_begin.millitm));
+    printf ("Data rate: %.3f MBPS\n",
+        ((total_recs * rec_size)/(float)time_spent_ms * 1000)/(1024*1024));
+
     return 0;
 }

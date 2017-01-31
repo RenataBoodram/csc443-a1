@@ -6,6 +6,13 @@
 #include <unistd.h>
 #include "part1.h"
 
+/*
+ * Program:        read_blocks_rand 
+ * Description:    Read from a binary file in block size chunks. 
+ * Authors:        boodram8, phamtyle
+ */
+
+
 int main(int argc, char *argv[])
 {
     const char *usage_msg = "Usage: write_blocks_rand <input filename> "

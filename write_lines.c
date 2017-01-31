@@ -5,6 +5,12 @@
 #include <unistd.h>
 #include "part1.h"
 
+/*
+ * Program:        write_lines
+ * Description:    Read from a CSV file and write to a new CSV file.
+ * Authors:        boodram8, phamtyle
+ */
+
 int main(int argc, char *argv[])
 {
     const char *usage_msg = "Usage: write_lines <input filename> " 
@@ -48,7 +54,6 @@ int main(int argc, char *argv[])
     {
         int line_len = strlen(line);
         total_bytes += (long) strlen(line);
-        //printf("Writing line %s", line);
         handle_fread_fwrite(line_len, "fwrite", line, 1, line_len, output_file);
     } 
     ftime(&t_end);
@@ -58,6 +63,6 @@ int main(int argc, char *argv[])
     long time_spent_ms;
     time_spent_ms = (long) (1000 *(t_end.time - t_begin.time)
         + (t_end.millitm - t_begin.millitm));
-    printf("Data rate: %.3f BPS\n", (total_bytes/(float) time_spent_ms * 1000));
+    printf("Data rate: %.3f MBPS\n", (total_bytes/(float) time_spent_ms * 1000)/(1024*1024));
     return 0;
 }

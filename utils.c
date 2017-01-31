@@ -61,3 +61,56 @@ void handle_fseek(FILE *stream, long offset, int whence)
         printf("fseek failed to seek in file by %ld offset.\n", offset); 
     }
 }
+
+/*
+ * Returns size of file. Terminates on error. 
+ */
+int find_file_size(FILE *file)
+{
+    int file_size = -1;
+    handle_fseek(file, 0L, SEEK_END);
+    file_size = ftell(file);
+    rewind(file);
+
+    if (file_size == -1) 
+    {
+        printf("Error when determining file size. Exiting.\n");
+	fclose(file);
+	exit(1);
+    }
+
+    return file_size;
+}
+
+/*
+ * Update unique_users, total_follows, and max_user_follow_count (required to
+ * calculate max and average values.
+ */
+
+void get_max_avg(Record *buffer, int cond, int unique_users, int total_follows, int max_user_follow_count)
+{
+    int cur_user_follow_count = 0;
+    int cur_user_id = 0;
+
+    int i = 0;
+    while (i < cond)
+    {
+        if (cur_user_id != buffer[i].uid1)
+	{
+	    cur_user_id = buffer[i].uid1;
+	    unique_users++;
+	    cur_user_follow_count = 1;
+	} else {
+	    cur_user_follow_count++;
+	}
+
+	if (cur_user_follow_count > max_user_follow_count)
+	{
+	    max_user_follow_count = cur_user_follow_count;
+	}
+
+	total_follows++;
+        i++;
+    }
+
+}
