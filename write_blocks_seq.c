@@ -8,7 +8,7 @@
 /*
  * Program:        write_blocks_seq 
  * Description:    Read from a CSV file up to specified block size before
- *                 writing buffer to records.dat
+ *                 writing buffer of blocks to records.dat
  * Authors:        boodram8, phamtyle
  */
 int main(int argc, char *argv[])
@@ -97,11 +97,7 @@ int main(int argc, char *argv[])
     fclose(file);
     free(buffer);
 
-    long time_spent_ms;
-    time_spent_ms = (long) (1000 *(t_end.time - t_begin.time)
-        + (t_end.millitm - t_begin.millitm));
-    printf ("Data rate: %.3f BPS\n", 
-        ((total_records*rec_size)/(float)time_spent_ms * 1000)/(1024*1024));
+    print_vals(t_begin, t_end, (total_records * rec_size), 0, 0);
 
     return 0;
 }

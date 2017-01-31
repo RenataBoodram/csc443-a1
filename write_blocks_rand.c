@@ -6,6 +6,13 @@
 #include <unistd.h>
 #include "part1.h"
 
+
+/*
+ * Program:        write_blocks_rand 
+ * Description:    Overwrite record in binary file at X random positions after
+ *                 locating record when reading in block size chunks.k
+ * Authors:        boodram8, phamtyle             
+ */              
 int main(int argc, char *argv[])
 {
     const char *usage_msg = "Usage: write_blocks_rand <input filename> "
@@ -66,14 +73,11 @@ int main(int argc, char *argv[])
         
         i++;
     }
+    fclose(file);
     ftime(&t_end);
     free(rec);
-    fclose(file);
-    long time_spent_ms;
-    time_spent_ms = (long) (1000 *(t_end.time - t_begin.time)
-        + (t_end.millitm - t_begin.millitm));
-    printf ("Data rate: %.3f BPS\n", 
-        ((num_updates*rec_size)/(float)time_spent_ms * 1000));
+
+    print_vals(t_begin, t_end, (num_updates * rec_size), 0, 0);
 
     return 0;
 }   

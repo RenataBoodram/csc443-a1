@@ -83,34 +83,66 @@ int find_file_size(FILE *file)
 }
 
 /*
- * Update unique_users, total_follows, and max_user_follow_count (required to
- * calculate max and average values.
+ * Update max value and other variables required to calculate the avg where
+ * avg = total_follows/unique_users.
  */
 
-void get_max_avg(Record *buffer, int cond, int unique_users, int total_follows, int max_user_follow_count)
+void get_max_avg(Record *buffer, int cond, int *max, int *unique_users,
+    int *total_follows, int *cur_user_id, int *cur_user_follow_count)
 {
-    int cur_user_follow_count = 0;
-    int cur_user_id = 0;
-
+    /* Note: cur_user_id keeps track of the current ID
+     *       cur_user_follow_count keeps track of the number of followers for
+     *       the current user.
+     */
     int i = 0;
     while (i < cond)
     {
-        if (cur_user_id != buffer[i].uid1)
+        printf("READ: %d, %d\n", buffer[i].uid1, buffer[i].uid2);
+
+        // Update unique_users when a new ID has been encountered
+        if (*cur_user_id != buffer[i].uid1)
 	{
-	    cur_user_id = buffer[i].uid1;
-	    unique_users++;
-	    cur_user_follow_count = 1;
+	    *cur_user_id = buffer[i].uid1;
+	    *unique_users = *unique_users + 1;
+            // Reset the follow count of the current user to 1
+	    *cur_user_follow_count = 1;
 	} else {
-	    cur_user_follow_count++;
+
+            /* If the same user is being tracked, keep track of their
+             * follow count.
+             */ 
+	    *cur_user_follow_count = *cur_user_follow_count + 1;
 	}
 
-	if (cur_user_follow_count > max_user_follow_count)
+        /* If the current user has a higher follow count, it is the
+         * new max.
+         */ 
+	if (*cur_user_follow_count > *max)
 	{
-	    max_user_follow_count = cur_user_follow_count;
+	    *max = *cur_user_follow_count;
 	}
 
-	total_follows++;
+        // Increase the total number of follows (for all users)
+	*total_follows = *total_follows + 1;
         i++;
     }
 
+}
+
+/* Prints total data rate time. Prints avg and max values if non-zero. */
+void print_vals(struct timeb t_begin, struct timeb t_end, int total_bytes, int max, float avg)
+{
+    if (max != 0)
+    {
+        printf("Max: %d\n", max);
+    }
+    if (avg != (float) 0) 
+    {
+        printf("Average: %.2f\n", avg);
+    }
+    long time_spent_ms;
+    time_spent_ms = (long) (1000 *(t_end.time - t_begin.time)
+        + (t_end.millitm - t_begin.millitm));
+    printf ("Data rate: %.3f MBPS\n",
+        (total_bytes/(float)time_spent_ms * 1000)/(1024*1024));
 }

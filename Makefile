@@ -1,6 +1,6 @@
-SOURCES = utils write_blocks_seq write_lines read_blocks_seq read_ram_seq read_blocks_rand read_ram_rand write_blocks_rand write_blocks_seq
+SOURCES = write_blocks_seq write_lines read_blocks_seq read_ram_seq read_blocks_rand read_ram_rand write_blocks_rand write_ram_rand
 
-all : $(SOURCES)
+all : utils $(SOURCES)
 
 CC = gcc
 CFLAGS = -O3 -Wall 
@@ -22,31 +22,14 @@ SOCK = -lnsl -lresolv
 endif
 
 SOURCECODE = $(patsubst %, %.c, $(SOURCES)) 
+OBJS = $(patsubst %, %.o, $(SOURCES))
 HDRS = part1.h
 
 utils : $(SOURCECODE) utils.c
 	$(CC) -c $(CFLAGS) $^
 
-$(SOURCES) : %.o utils.o
-	$(CC) $(CFLAGS) $^ -o $@
-
-#write_blocks_seq : write_blocks_seq.o utils.o
-#	$(CC) $(CFLAGS) $^ -o $@
-
-#write_lines : write_lines.o utils.o
-#	$(CC) $(CFLAGS) $^ -o $@
-
-#read_blocks_seq : read_blocks_seq.o utils.o
-#	$(CC) $(CFLAGS) $^ -o $@
-
-#read_ram_seq : read_ram_seq.o utils.o
-#	$(CC) $(CFLAGS) $^ -o $@
-
-#write_blocks_rand : write_blocks_rand.o utils.o
-#	$(CC) $(CFLAGS) $^ -o $@
-
-#write_ram_rand : write_ram_rand.o utils.o 
-#	$(CC) $(CFLAGS) $^ -o $@
+$(SOURCES) : $(OBJS) utils.o
+	$(CC) $(CFLAGS) $@.o utils.o -o $@ 
 
 clean:
 	rm -f *.o $(SOURCES) 

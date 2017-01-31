@@ -8,14 +8,13 @@
 
 /*
  * Program:        read_blocks_rand 
- * Description:    Read from a binary file in block size chunks. 
+ * Description:    Read from a binary file in block size chunks at X random
+ *                 positions. 
  * Authors:        boodram8, phamtyle
  */
-
-
 int main(int argc, char *argv[])
 {
-    const char *usage_msg = "Usage: write_blocks_rand <input filename> "
+    const char *usage_msg = "Usage: read_blocks_rand <input filename> "
         "<block size> <X number of random reads>\n";
     char *input_file; // Input filename
     int num_rand_reads = 0;
@@ -28,10 +27,11 @@ int main(int argc, char *argv[])
         input_file = argv[1];
         block_size = (int) strtol(argv[2], (char **)NULL, 10);
 
-	if(block_size % rec_size != 0)
+	if (block_size % rec_size != 0)
 	{
-	printf("Please enter a valid blocksize");
-	exit(1);
+	    printf("%d is not a valid block size. Must be a multiple of 8.\n",
+                block_size);
+	    exit(1);
 	}
 
         num_rand_reads = (int) strtol(argv[3], (char **)NULL, 10);
@@ -46,28 +46,19 @@ int main(int argc, char *argv[])
     }
 
     // Calculate size of the binary file
-    handle_fseek(file, 0L, SEEK_END); 
-    int file_size = ftell(file);
-    if (file_size == -1)
-    {
-        printf("Error when determining file size. Exiting.\n");
-        fclose(file);
-        exit(1);
-    }
+    int file_size = 0;
+    file_size = find_file_size(file);
 
-    rewind(file);
+    int num_of_recs = file_size / rec_size;
 
-    int num_of_recs = file_size/rec_size;
+    int records_per_block = block_size / rec_size;
 
-    int records_per_block = block_size/rec_size;
+    int total_follows = 0;         // Total number of follow relationships 
+    int unique_users = 0;          // Total number of unique users                  
+    int cur_user_follow_count = 0; // Follow count for current user                
+    int cur_user_id = 0;           // Keep track of current user ID    
 
-    int total_follows = 0;
-    int unique_users = 0;
-
-    int max_user_follow_count = 0;
-    int cur_user_follow_count = 0;
-    //need this to identify unique users
-    int cur_user_id = 0;
+    int max = 0;
 
     float avg_num_followed = 0;
     
@@ -82,7 +73,9 @@ int main(int argc, char *argv[])
 
     while (i < num_rand_reads)
     {
-        // Choose a random record number in interval [0, num_of_recs - 1].
+        /* Choose a random record number in interval 
+         * [0, num_of_recs - records_per_block - 1].
+         */
         rec_num = rand() % (num_of_recs - records_per_block); 
     
         printf("Record %ld chosen\n", rec_num);
@@ -91,49 +84,18 @@ int main(int argc, char *argv[])
          
         handle_fread_fwrite(block_size,"fread", buffer, 1, block_size, file);
 
-       	// Read the block
-           int j = 0;
-            printf("RECORDS PER BLOCK: %d\n", records_per_block);
-            while (j < records_per_block)
-            {
-                printf("Record uid1: %d, Record uid2: %d\n", buffer[j].uid1, buffer[j].uid2);
-
-                //if new user, then increment unqiue users 
-                //and reset follower counter back to 1
-                if(cur_user_id != buffer[j].uid1)
-                {
-                    cur_user_id = buffer[j].uid1;
-                    unique_users++;
-                    cur_user_follow_count = 1;
-                } else {
-                    cur_user_follow_count++;
-                }
-
-                if (cur_user_follow_count > max_user_follow_count)
-                {
-                    max_user_follow_count = cur_user_follow_count;
-                }
-
-                total_follows++;
-                j++;
-            }
-
+        get_max_avg(buffer, records_per_block, &max, &unique_users, 
+            &total_follows, &cur_user_id, &cur_user_follow_count);
 
         i++;
-    }    ftime(&t_end);
-    //free(rec);
+    } 
+    avg_num_followed = (float) total_follows / unique_users;
     fclose(file);
-    long time_spent_ms;
-    time_spent_ms = (long) (1000 *(t_end.time - t_begin.time)
-        + (t_end.millitm - t_begin.millitm));
-    printf ("Data rate: %.3f BPS\n", 
-        ((num_rand_reads*rec_size)/(float)time_spent_ms * 1000));
+    ftime(&t_end);
+    free(buffer);
 
-    avg_num_followed = (float)total_follows/unique_users;
-    //fclose(file);
-    printf("Parsed %d, lines of data. \n", total_follows);
-    printf("The most people followed is: %d. \n", max_user_follow_count);
-    printf("Average number of follows is: %.2f. \n", avg_num_followed);
+    print_vals(t_begin, t_end, (num_rand_reads * records_per_block * rec_size),
+        max, avg_num_followed);
 
     return 0;
 }   

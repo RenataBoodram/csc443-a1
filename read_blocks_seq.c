@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/timeb.h>
 #include <unistd.h>
 #include "part1.h"
 
 /*
  * Program:        read_blocks_seq 
- * Description:    Read from a CSV file and write to a new CSV file.
+ * Description:    Read from a binary file in block size chunks. 
  * Authors:        boodram8, phamtyle
  */
 
@@ -40,18 +41,14 @@ int main(int argc, char *argv[])
     FILE *file = fopen(input_file, "rb");
     if (!file)
     {
-        printf("Could not open file for reading. Exiting.\n")
+        printf("Could not open file for reading. Exiting.\n");
 	exit(1);
     }
-    
-    int total_follows = 0;   
-    int unique_users = 0;
 
-    int max_user_follow_count = 0;
-    int cur_user_follow_count = 0;
-    //need this to identify unique users
-    int cur_user_id = 0;
-
+    int total_follows = 0;         // Total number of follow relationships 
+    int unique_users = 0;          // Total number of unique users 
+    int cur_user_follow_count = 0; // Follow count for current user                   
+    int cur_user_id = 0;           // Keep track of current user ID   
     float avg_num_followed = 0; 
 
     Record *buffer = (Record *) calloc(records_per_block, rec_size);
@@ -60,56 +57,22 @@ int main(int argc, char *argv[])
 
     long total_bytes = 0;
 
+    int max = 0;
+
     ftime(&t_begin);
     while ((num_recs = fread(buffer, 1, block_size, file)) != 0)
     {
         total_bytes = total_bytes + num_recs;
-        int i = 0;
-	get_max_avg(buffer, (num_recs/rec_size), unique_users, total_follows, 
-	    max_user_follow_count);
-        //printf("NUM_OF_RECS: %d\n", (num_recs / rec_size));
-/*        while (i < (num_recs/rec_size))
-        {
-            printf("Record uid1: %d, Record uid2: %d\n", buffer[i].uid1, buffer[i].uid2); 
-              
-            // If there is a new user, increment unique_users and reset
-	    // reset counter back to 1 
-            if(cur_user_id != buffer[i].uid1)
-            {
-                cur_user_id = buffer[i].uid1;
-                unique_users++;
-                cur_user_follow_count = 1;
-            } else {
-                cur_user_follow_count++;
-            }
-
-            if (cur_user_follow_count > max_user_follow_count) 
-            {
-                max_user_follow_count = cur_user_follow_count;
-            }
-
-            total_follows++;
-            i++;
-        } 
-*/
+	get_max_avg(buffer, (num_recs/rec_size), &max, &unique_users, 
+            &total_follows, &cur_user_id, &cur_user_follow_count); 
 
     }
 
-    avg_num_followed = (float)total_follows/unique_users;
+    avg_num_followed = (float) total_follows/unique_users;
     fclose(file);
     ftime(&t_end);
     free(buffer);
-
-    //printf("Parsed %d, lines of data. \n", total_follows);
-    //printf("The most people followed is: %d. \n", max_user_follow_count);
-    //printf("Average number of follows is: %.2f. \n", avg_num_followed);
-    printf("Max: %d\n", max_user_follow_count);
-    printf("Average: %.2f\n" avg_num_followed);
-    long time_spent_ms;
-    time_spent_ms = (long) (1000 *(t_end.time - t_begin.time) 
-        + (t_end.millitm - t_begin.millitm));
-    printf ("Data rate: %.3f MBPS\n",
-        (total_bytes/(float)time_spent_ms * 1000)/(1024*1024));
-
+    
+    print_vals(t_begin, t_end, total_bytes, max, avg_num_followed);
     return 0;
 }

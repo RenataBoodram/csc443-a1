@@ -60,9 +60,6 @@ int main(int argc, char *argv[])
     fclose(output_file);
     fclose(file);
 
-    long time_spent_ms;
-    time_spent_ms = (long) (1000 *(t_end.time - t_begin.time)
-        + (t_end.millitm - t_begin.millitm));
-    printf("Data rate: %.3f MBPS\n", (total_bytes/(float) time_spent_ms * 1000)/(1024*1024));
+    print_vals(t_begin, t_end, total_bytes, 0, 0);
     return 0;
 }

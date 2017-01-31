@@ -6,9 +6,14 @@
 #include <unistd.h>
 #include "part1.h"
 
+/*
+ * Program:        write_ram_rand 
+ * Description:    Overwrite X randomly chosen records in RAM buffer.
+ * Authors:        boodram8, phamtyle             
+ */              
 int main(int argc, char *argv[])
 {
-    const char *usage_msg = "Usage: write_blocks_rand <input filename> "
+    const char *usage_msg = "Usage: write_ram_rand <input filename> "
         "<X number of updates>\n";
     char *input_file; // Input filename
     int num_updates = 0;
@@ -75,11 +80,7 @@ int main(int argc, char *argv[])
     free(rec);
     free(buffer);
     fclose(file);
-    long time_spent_ms;
-    time_spent_ms = (long) (1000 *(t_end.time - t_begin.time)
-        + (t_end.millitm - t_begin.millitm));
-    printf ("Data rate: %.3f BPS\n", 
-        ((num_updates*rec_size)/(float)time_spent_ms * 1000));
+    print_vals(t_begin, t_end, (num_updates * rec_size), 0, 0);
 
     return 0;
 }   
