@@ -16,6 +16,7 @@ int main(int argc, char *argv[])
     const char *usage_msg = "Usage: read_ram_seq <filename><block_size>\n";
     char *input_file;
     int block_size = 0;
+    int records_per_block = 0;
  
     if (argc != 3) {
         printf("%s", usage_msg);
@@ -30,7 +31,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
         else{
-        int records_per_block = block_size / rec_size;
+        records_per_block = block_size / rec_size;
         printf("RECORDS_PER_BLOCK %d\n", (int)records_per_block);
         }
     }
@@ -50,31 +51,42 @@ int main(int argc, char *argv[])
 
     float avg_num_followed = 0; 
 
+    Record *buffer = (Record *) calloc(records_per_block, rec_size);
     if (file){
-        while ((read = getline(&line, &n, file)) != -1){
-            // printf("Current line: %s", line);    
-            Record *rec = line_to_record(line);
-            // printf("Record uid1: %d, uid2: %d\n", rec->uid1, rec->uid2);
+        //int i = 0;
+        int num_recs = 0;
+        while ((num_recs = fread(buffer, 1, block_size, file)) != 0)
+        {
+            int i = 0;
+            //printf("NUM_OF_RECS: %d\n", (num_recs / rec_size));
+            while (i < (num_recs/rec_size))
+            {
+                printf("Record uid1: %d, Record uid2: %d\n", buffer[i].uid1, buffer[i].uid2); 
+              
+                //if new user, then increment unqiue users 
+                //and reset follower counter back to 1
+                if(cur_user_id != buffer[i].uid1)
+                {
+                    cur_user_id = buffer[i].uid1;
+                    unique_users++;
+                    cur_user_follow_count = 1;
+                } else {
+                    cur_user_follow_count++;
+                }
 
-     		//if new user, then increment unqiue users 
-     		//and reset follower counter back to 1
-     		if(cur_user_id != rec->uid1){
-     			cur_user_id = rec->uid1;
-     			unique_users++;
-				cur_user_follow_count = 1;
-     		}
-     		else{
-     			cur_user_follow_count++;
-    		}
+                if (cur_user_follow_count > max_user_follow_count) 
+                {
+                    max_user_follow_count = cur_user_follow_count;
+                }
 
-			if(cur_user_follow_count > max_user_follow_count){
-				max_user_follow_count = cur_user_follow_count;
-			}
+                total_follows++;
+                i++;
+            } 
 
-            total_follows++;
-        } 
-    } 
-    else {
+
+        }
+
+    } else {
         printf("File %s could not be found. Exiting.\n", input_file);
         exit(1);
     }
@@ -87,37 +99,3 @@ int main(int argc, char *argv[])
     printf("Average number of follows is: %.2f. \n", avg_num_followed);
     return 0;
 }
-
-Record *line_to_record(char *line) {
-    const char *delim = ",";
-    Record *rec = malloc(sizeof(Record));
-    int line_len = strlen(line);
-    char *line_copy = malloc(sizeof(char) * line_len);
-    strncpy(line_copy, line, line_len); 
-
-    // Initialize str_arr where each string has max len equal to total line
-    // len excluding the comma, divded by 2 for 2 IDs.
-    //char str_arr[2][(line_len - 1)/2];
-    char *str_arr[2];
-    char *val = strtok(line_copy, delim);
-    int i = 0;
-    while (val != NULL) {
-        str_arr[i] = val;
-        val = strtok(NULL, delim);
-        i++;
-    }
-
-    rec->uid1 = (int) strtol(str_arr[0], (char **)NULL, 10);
-    rec->uid2 = (int) strtol(str_arr[1], (char **)NULL, 10);
-    free(line_copy);
-    return rec;
-}
-
-// Record *buffer = (Record *) calloc (records_per_block, sizeof(Record));
-//     int result = fread(buffer,sizeof(Record),records_per_block,fp_read);
-//     int i;
-    
-//     for(i = 0; i < 27; i++){
-//         fread(buffer,sizeof(Record),records_per_block,fp_read);
-//         printf("%d\n",buffer->uid1);
-//     }
