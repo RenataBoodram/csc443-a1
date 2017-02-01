@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
         records_per_block = block_size / rec_size;
         printf("RECORDS_PER_BLOCK %d\n", records_per_block);
     }
-    const char *output_filename = "records.dat"; 
+    const char *output_filename = "/s/csc443/boodram8/records.dat"; 
     FILE *file = fopen(input_file, "r");
     FILE *output_file = fopen(output_filename, "wb");
 
@@ -55,7 +55,6 @@ int main(int argc, char *argv[])
     char *line = NULL; // Holds line of input file
     size_t n = 0;
     struct timeb t_begin, t_end;
-
     Record *buffer = (Record *) calloc(records_per_block, rec_size);
     int recs_so_far = 0; // Total records written so far
     long total_records = 0;
@@ -77,8 +76,8 @@ int main(int argc, char *argv[])
         char *str_arr[2];
         parse_line(line, str_arr);
         Record *rec = line_to_record(str_arr);
-        //printf("Record uid1: %d, uid2: %d\n", rec->uid1, rec->uid2);
-        memcpy(buffer + (recs_so_far * rec_size), (const void *) rec, 
+        printf("Record uid1: %d, uid2: %d\n", rec->uid1, rec->uid2);
+        memcpy(buffer + recs_so_far, (const void *) rec, 
             rec_size);
         free(rec);
         recs_so_far++;
