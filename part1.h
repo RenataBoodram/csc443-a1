@@ -13,7 +13,7 @@ enum {
 void parse_line(char *line, char *str_arr[]);
 
 /* Returns Record given array of Record fields. */
-Record *line_to_record(char *str_arr[]);
+void line_to_record(Record *rec, char *str_arr[]);
 
 /* Wrapper function to handle fread and fwrite errors. */
 void handle_fread_fwrite(int bytes, const char *func, void *ptr, size_t size,

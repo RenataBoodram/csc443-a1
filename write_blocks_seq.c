@@ -31,9 +31,7 @@ int main(int argc, char *argv[])
 	        "Exiting.\n", block_size, rec_size);
             exit(1);
 	}
-        printf("BLOCK SIZE: %d\n", block_size);
         records_per_block = block_size / rec_size;
-        printf("RECORDS_PER_BLOCK %d\n", records_per_block);
     }
     const char *output_filename = "/s/csc443/boodram8/records.dat"; 
     FILE *file = fopen(input_file, "r");
@@ -56,6 +54,7 @@ int main(int argc, char *argv[])
     size_t n = 0;
     struct timeb t_begin, t_end;
     Record *buffer = (Record *) calloc(records_per_block, rec_size);
+    Record *rec = malloc(rec_size);
     int recs_so_far = 0; // Total records written so far
     long total_records = 0;
     ftime(&t_begin);
@@ -66,34 +65,29 @@ int main(int argc, char *argv[])
         // Check if buffer is full
         if (recs_so_far == records_per_block)
         {
-            printf("Writing buffer...\n");
-            handle_fread_fwrite(recs_so_far, "fwrite", buffer, rec_size, recs_so_far,
-                output_file);
-            fflush(output_file);               
+            handle_fread_fwrite(recs_so_far, "fwrite", buffer, rec_size, 
+                recs_so_far, output_file);
             recs_so_far = 0;
         }
-        //printf("Current line: %s\n", line);    
         char *str_arr[2];
         parse_line(line, str_arr);
-        Record *rec = line_to_record(str_arr);
-        printf("Record uid1: %d, uid2: %d\n", rec->uid1, rec->uid2);
+        line_to_record(rec, str_arr);
         memcpy(buffer + recs_so_far, (const void *) rec, 
             rec_size);
-        free(rec);
         recs_so_far++;
         total_records++;
     }
-
-    // Flush remaining buffer
-    if (recs_so_far != 0)
+    
+    // Write remaining buffer
+    if (recs_so_far >= 1)
     {
         handle_fread_fwrite(recs_so_far, "fwrite", buffer, rec_size, recs_so_far,
             output_file);
-        fflush(output_file); 
     }
     ftime(&t_end);
     fclose(output_file); 
     fclose(file);
+    free(rec);
     free(buffer);
 
     print_vals(t_begin, t_end, (total_records * rec_size), 0, 0);
