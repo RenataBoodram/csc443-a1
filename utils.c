@@ -21,12 +21,10 @@ void parse_line(char *line, char *str_arr[])
 }
 
 /* Creates Record given array of Record fields. */
-Record *line_to_record(char *str_arr[])
+void line_to_record(Record *rec, char *str_arr[])
 {
-    Record *rec = malloc(rec_size);
     rec->uid1 = (int) strtol(str_arr[0], (char **)NULL, 10);
     rec->uid2 = (int) strtol(str_arr[1], (char **)NULL, 10);
-    return rec;
 }
 
 /* Wrapper function to handle fread and fwrite errors. */

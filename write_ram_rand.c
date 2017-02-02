@@ -68,11 +68,9 @@ int main(int argc, char *argv[])
     {
         // Choose a random record number in interval [0, num_of_recs - 1].
         rec_num = rand() % num_of_recs; 
-        printf("Record chosen: %ld\n", rec_num);
     
         // Overwrite record
         memcpy((buffer + rec_num), rec, rec_size);
-        printf("Record uid1: %d, uid2: %d\n", rec->uid1, rec->uid2);
         
         i++;
     }

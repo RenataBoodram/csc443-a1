@@ -65,7 +65,6 @@ int main(int argc, char *argv[])
         // Choose a random record number in interval [0, num_of_recs - 1].
         rec_num = rand() % num_of_recs; 
     
-        printf("Record %ld chosen\n", rec_num);
         // Seek to the start of the record
         handle_fseek(file, (rec_num * rec_size), SEEK_SET);
         // Write the dummy record

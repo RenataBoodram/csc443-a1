@@ -78,7 +78,6 @@ int main(int argc, char *argv[])
          */
         rec_num = rand() % (num_of_recs - records_per_block); 
     
-        printf("Record %ld chosen\n", rec_num);
         // Seek to the start of the record
         handle_fseek(file, (rec_num * rec_size), SEEK_SET);
          

@@ -78,7 +78,6 @@ int main(int argc, char *argv[])
          */
         rec_num = rand() % (num_of_recs - records_per_block); 
     
-        printf("Record %ld chosen\n", rec_num);
         get_max_avg(buffer + rec_num, records_per_block, &max, &unique_users, 
             &total_follows, &cur_user_id, &cur_user_follow_count);
 

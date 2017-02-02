@@ -42,19 +42,16 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    size_t read; // Check status  of reading input file
-    char *line = NULL; // Holds line of input file
-    size_t n = 0;
+    char line[256];
     
     struct timeb t_begin, t_end;
     long total_bytes = 0;
     
     ftime(&t_begin);
-    while ((read = getline(&line, &n, file)) != -1) 
+    while(fgets (line, 256, file) != NULL)
     {
-        int line_len = strlen(line);
         total_bytes += (long) strlen(line);
-        handle_fread_fwrite(line_len, "fwrite", line, 1, line_len, output_file);
+        fputs(line, output_file);
     } 
     ftime(&t_end);
     fclose(output_file);
