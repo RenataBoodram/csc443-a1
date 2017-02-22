@@ -1,0 +1,75 @@
+===============================================================================
+ONLY CONTAINS PART 1 UNTIL IT'S COMPLETED
+tl;dr of http://csc443-ass-2017.blogspot.ca/p/part-2-external-sort.html
+- work with records.dat
+===============================================================================
+
+MAIN RESEARCH GOAL
+- for different values of k, FIND: 
+    - find MEASURE OF POPULARITY := users with k number of in-bound links
+    - find MEASURE OF CONFORMISM := users with k number of out-bound links
+- First we want to test for:
+    - POWER-LAW DISTRIBUTION := for each value of k, there are 1/k^c vertices with this number of in- or out-links
+        - then we will determine power of distribution (the c value)
+- INTRO TO TASKS
+    - compute out-degree by modifying max-average program from A 1.1
+    - compute in-degree - assume we cannot load and process the dataset in main memory
+    - need to sort table of records by UID2
+- TASKS
+    - 1. Implement Two-Pass Multi-way Merge Sort (2PMMS)
+    - 2. Run performance experiments
+    - 3. learning distributions of in- and out-degrees in Twitter graph
+
+ORDER OF TASKS
+1. Generate records.dat on edges.csv with WRITE_BLOCKS_SEQ using OPTIMAL BLOCK SIZE from Part 1
+    - should be ~700MB
+- sorting program may not 
+2. (This is actually "1 Implementing 2PMMS" on the blog page - kept sub-headings the same)
+    -> Call 2PMMS program DISK_SORT
+-------------------------------------------------------------------------------
+    - 1.1 Main-memory sorting
+        - 1. Implement function that SORTS IN RAM an array of records by UID2
+            - 1.1 use stdlib.h qsort 
+            - 1.2 qsort requires a comparison function as an argument, implement our own
+                - SEE BLOG FOR EXAMPLES on qsort
+            - 1.3 Read a part of input file into buffer array with size == multiple of block size
+            - 1.4 Sort records by UID2
+            - 1.5 Write sorted buffer to stdout (MAKE SURE UID2 IS SORTED CORRECTLY)
+-------------------------------------------------------------------------------
+    - 1.2 Producing sorted runs
+        - 1. Implement Phase I of 2PMMS with parameters: ->
+            -> <name of the input file> <total mem in bytes> <block size>
+                - total mem := amount of memory you are restricted to use in 
+                  in your program - 5MB EXTRA IS ALLOWED for data structures
+            - 1.1 Check if size of allocated memory is enough to perform 2PMMS 
+                  and exit gracefully if it is not. 
+            - 1.2 Partition binary input into K chunks of max possible size that
+                  can fit into memory (do this calculation in our program). 
+            - 1.3 Sort records in each chunk by UID2 and write sorted run to disk.
+-------------------------------------------------------------------------------
+    - 1.3 Merging runs
+        - 1. Allocate memory for K (total number of runs) input buffer
+            - 1.1 Each buffer must have an array of records that is dynamically allocated
+            - 1.2 Size depends on amount of available main memory and total number of runs
+            - 1.3 Each array should be aligned with block size
+        - 2. Allocate memory for one output buffer
+            - 2.1 Should be able to at least hold one block 
+        - 3. For each input buffer STORE: file pointer, current position in file,
+            and current position in buffer
+        - 4. Prefill input buffer arrays with records from each run
+            - 4.1 Add heads of each array to a HEAP
+            - 4.2 Remove element from top of heap
+            - 4.3 Transfer removed element to the output buffer
+            - 4.4 Insert new element from same run onto heap WHILE REMOVED ELEMENT IS
+                  BEING TRANSFERRED
+            - 4.5 Repeat until entire run is processed. When output buffer is full,
+                  content is added to final output file.
+        - 5. Program terminates when heap is empty (i.e., all records have been merged) 
+        - 6. Flush remaining content of output buffer to disk.
+-------------------------------------------------------------------------------
+            
+        
+        
+
+RESTRICTIONS
+- sorting program MUST NOT consume more than predefined limited amount of RAM (supplied as program parameter)
