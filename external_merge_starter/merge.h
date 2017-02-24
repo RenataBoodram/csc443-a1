@@ -23,6 +23,10 @@ typedef struct HeapElement {
 	int run_id;
 } HeapElement;
 
+enum {
+    rec_size = sizeof(Record),
+};
+
 //Record-keeping struct, to pass around to all small functions
 //has to be initialized before merge starts
 typedef struct merge_manager {

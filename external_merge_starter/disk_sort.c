@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "merge.h"
+#include "part2.h"
 
 /**
 * Compares two records a and b 
@@ -24,6 +25,7 @@ int main(int argc, char *argv[])
     char *input_file;
     int total_mem = 0;
     int block_size = 0;
+    int recs_per_block = 0;
 
     if (argc != 4)
     {
@@ -41,7 +43,7 @@ int main(int argc, char *argv[])
             exit(1);
         } else
         {
-            records_per_block = block_size / rec_size;
+            recs_per_block = block_size / rec_size;
         }
     }
 
@@ -56,13 +58,69 @@ int main(int argc, char *argv[])
 
     int file_size = find_file_size(file);
 
-    int recs_per_block = block_size/rec_size;
-    // TODO: put code below into a loop
-    // TODO: figure out what to multiply buffer size by
-    //Record *buffer = (Record *) calloc(, rec_size) 
-    qsort (buffer, total_records, sizeof(Record), compare);
-    // Write something
-    // Flush buffer
+    // Find number of blocks, each of size block_size that memory can hold
+    int blocks_in_mem = total_mem/block_size;
+    // Divide the file into num_chunks chunks
+    int num_chunks = file_size/(blocks_in_mem * block_size);
+
+    /* If the file_size isn't perfectly divisible by blocks_in_mem, add
+     * an extra chunk (note how chunks are equivalent to the number of
+     * "runs" we must do. 
+     */ 
+    int is_leftover_bytes = file_size % (blocks_in_mem * block_size);
+    if (is_leftover_bytes != 0) 
+    {
+        num_chunks = num_chunks + 1;
+    }
+
+    if ((num_chunks*block_size) > total_mem)
+    {
+        printf("Not enough memory to perform 2PMMS. Exiting\n");
+        fclose(file);
+        exit(1);
+    }
+
+    // Total number of records that can be held in memory at one time
+    int total_recs_in_mem = blocks_in_mem * recs_per_block; 
+    int curr_run = 0;
+    // Phase 1
+    while (curr_run < num_chunks) 
+    {
+        // Allocate a buffer that is a multiple of block_size
+        Record *buffer = (Record *) calloc(total_recs_in_mem, rec_size);
+        if (curr_run != (num_chunks - 1) || (is_leftover_bytes == 0)) 
+        {
+            handle_fread_fwrite(total_recs_in_mem, "fread", buffer, rec_size, total_recs_in_mem, file); 
+        } elsif ((curr_run == (num_chunks - 1)) && (is_leftover_bytes != 0))
+        {
+            // If there are some leftover bytes to read, read them. 
+            /* Note to self: fread is called without handle_fread_fwrite
+             * because we don't know how many bytes to expect.
+             */ 
+            int bytes_read = fread(buffer, rec_size, total_recs_in_mem, file);
+            if (bytes_read == 0)
+            {
+                printf("fread returned 0 bytes when we expected to read some"
+                    "bytes. Exiting.\n");
+                free(buffer);
+                fclose(file);
+                exit(1);
+            } 
+        }
+        // Quick sort the buffer (Phase I)
+        qsort(buffer, rec_size, compare);
+
+        int bytes_written = fwrite(buffer, rec_size, total_recs_in_mem, file_write); 
+
+        free(buffer);
+        curr_run = curr_run + 1;
+    }
+
+    // Free any old buffer - but this should have been done in the loop anyways.
+    free(buffer);
+    fclose(file);
+
+    // TODO: mergesort the different chunks we have (req of 1.2 Producing sorted runs) - Phase I of 2PMMS
     
-     
+    return 0;     
 }
