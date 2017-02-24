@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include "merge.h"
-#include "part2.h"
 
 /**
 * Compares two records a and b 
@@ -13,8 +12,8 @@
 */
 int compare (const void *a, const void *b) 
 {
-   int a_f = ((const struct Record*)a)->f;
-   int b_f = ((const struct Record*)b)->f;
+   int a_f = ((const Record*)a)->UID2;
+   int b_f = ((const Record*)b)->UID2;
    return (a_f - b_f);
 }
 
@@ -54,8 +53,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    // 1.1 Main-memory sorting
-
     int file_size = find_file_size(file);
 
     // Find number of blocks, each of size block_size that memory can hold
@@ -84,14 +81,31 @@ int main(int argc, char *argv[])
     int total_recs_in_mem = blocks_in_mem * recs_per_block; 
     int curr_run = 0;
     // Phase 1
+    // Up to 10 characters for sortedXXX\0
+    char *filename = calloc(10, sizeof(char));
+    strncpy(filename, "sorted", 6); 
     while (curr_run < num_chunks) 
     {
+        char file_num[4];
+        sprintf(file_num, "%d", curr_run);
+        // Create a new file to write to 
+        strncpy(filename + 6, file_num, 1 * sizeof(char));
+         
+        FILE *file_write = fopen(filename, "wb");
+        if (!file_write) 
+        {
+            printf("Could not open file for writing. Exiting.\n");
+            free(filename);
+            fclose(file);
+            exit(1);
+        }
+
         // Allocate a buffer that is a multiple of block_size
         Record *buffer = (Record *) calloc(total_recs_in_mem, rec_size);
         if (curr_run != (num_chunks - 1) || (is_leftover_bytes == 0)) 
         {
             handle_fread_fwrite(total_recs_in_mem, "fread", buffer, rec_size, total_recs_in_mem, file); 
-        } elsif ((curr_run == (num_chunks - 1)) && (is_leftover_bytes != 0))
+        } else if ((curr_run == (num_chunks - 1)) && (is_leftover_bytes != 0))
         {
             // If there are some leftover bytes to read, read them. 
             /* Note to self: fread is called without handle_fread_fwrite
@@ -102,22 +116,23 @@ int main(int argc, char *argv[])
             {
                 printf("fread returned 0 bytes when we expected to read some"
                     "bytes. Exiting.\n");
+                free(filename);
                 free(buffer);
                 fclose(file);
                 exit(1);
             } 
         }
         // Quick sort the buffer (Phase I)
-        qsort(buffer, rec_size, compare);
+        qsort(buffer, total_recs_in_mem, rec_size, compare);
 
-        int bytes_written = fwrite(buffer, rec_size, total_recs_in_mem, file_write); 
-
+        fwrite(buffer, rec_size, total_recs_in_mem, file_write); 
+         
+        fclose(file_write);
         free(buffer);
         curr_run = curr_run + 1;
     }
 
-    // Free any old buffer - but this should have been done in the loop anyways.
-    free(buffer);
+    free(filename);
     fclose(file);
 
     // TODO: mergesort the different chunks we have (req of 1.2 Producing sorted runs) - Phase I of 2PMMS

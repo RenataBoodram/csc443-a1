@@ -27,6 +27,13 @@ enum {
     rec_size = sizeof(Record),
 };
 
+/* Returns size of file. Terminates on error. */
+int find_file_size(FILE *file);
+
+/* Wrapper function to handle fread and fwrite errors. */
+void handle_fread_fwrite(int bytes, const char *func, void *ptr, size_t size,
+    size_t nmemb, FILE *stream);
+
 //Record-keeping struct, to pass around to all small functions
 //has to be initialized before merge starts
 typedef struct merge_manager {

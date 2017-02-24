@@ -3,7 +3,8 @@
 #include <string.h>
 #include <sys/timeb.h>
 #include <unistd.h>
-#include "part1.h"
+#include "merge.h"
+//#include "part1.h"
 
 /* Returns array of strings given a file line delimited by commas. */
 void parse_line(char *line, char *str_arr[])
@@ -23,8 +24,8 @@ void parse_line(char *line, char *str_arr[])
 /* Creates Record given array of Record fields. */
 void line_to_record(Record *rec, char *str_arr[])
 {
-    rec->uid1 = (int) strtol(str_arr[0], (char **)NULL, 10);
-    rec->uid2 = (int) strtol(str_arr[1], (char **)NULL, 10);
+    rec->UID1 = (int) strtol(str_arr[0], (char **)NULL, 10);
+    rec->UID2 = (int) strtol(str_arr[1], (char **)NULL, 10);
 }
 
 /* Wrapper function to handle fread and fwrite errors. */
@@ -95,12 +96,12 @@ void get_max_avg(Record *buffer, int cond, int *max, int *unique_users,
     int i = 0;
     while (i < cond)
     {
-        printf("READ: %d, %d\n", buffer[i].uid1, buffer[i].uid2);
+        printf("READ: %d, %d\n", buffer[i].UID1, buffer[i].UID2);
 
         // Update unique_users when a new ID has been encountered
-        if (*cur_user_id != buffer[i].uid1)
+        if (*cur_user_id != buffer[i].UID1)
 	{
-	    *cur_user_id = buffer[i].uid1;
+	    *cur_user_id = buffer[i].UID1;
 	    *unique_users = *unique_users + 1;
             // Reset the follow count of the current user to 1
 	    *cur_user_follow_count = 1;
