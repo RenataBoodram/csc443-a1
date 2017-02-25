@@ -122,25 +122,54 @@ int insert_into_heap (MergeManager * merger, int run_id, Record *input){
 */
 
 int init_merge (MergeManager * manager) {
-	return SUCCESS;
+    // TODO: implement
+    return SUCCESS;
 }
 
+/* Write the buffer and flush to disk. */
 int flush_output_buffer (MergeManager * manager) {
-	return SUCCESS;
+    FILE *file_write = fopen(manager->output_file_name, "a");
+    if (!file_write)
+    {
+        printf("Could not open file %s for writing.\n", manager->output_file_name);
+        return FAILURE;
+    }
+
+    // Write the current output_buffer
+    fwrite(manager->output_buffer, rec_size, manager->current_output_buffer_position, file_write);
+    fflush(file_write);
+    fclose(file_write);
+    manager->current_output_buffer_position = 0;
+
+    return SUCCESS;
 }
 
 int get_next_input_element(MergeManager * manager, int file_number, Record *result) {
-	return SUCCESS;
+    // TODO: implement 
+    return SUCCESS;
 }
 
 int refill_buffer (MergeManager * manager, int file_number) {
+    // TODO: implement
 	return SUCCESS;
 }
 
 void clean_up (MergeManager * merger) {
-	
+    free(merger->heap);
+    int i = 0;
+    while (i < merger->heap_capacity)
+    {
+        free(merger->input_buffers[i]);
+        i = i + 1;
+    }
+    free(merger->output_buffer); 
+    free(merger);
 }
 
 int compare_heap_elements (HeapElement *a, HeapElement *b) {
-	return 0;
+    if (b->UID2 < a->UID2)
+    {
+        return 1;
+    } 
+    return 0;
 }
