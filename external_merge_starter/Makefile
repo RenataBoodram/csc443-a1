@@ -4,7 +4,7 @@ SOURCES = main
 all : utils $(SOURCES)
 
 CC = gcc
-CFLAGS = -O3 -Wall 
+CFLAGS = -g -O3 -Wall 
 CFLAGS += -D_LARGEFILE_SOURCE
 CFLAGS += -fno-exceptions
 CFLAGS += -finline-functions

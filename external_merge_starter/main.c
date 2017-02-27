@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include "merge.h"
 
@@ -32,7 +33,7 @@ int main(int argc, char *argv[])
     } else {
         input_file = argv[1];
         total_mem = (int) strtol(argv[2], (char **)NULL, 10);
-        block_size = (int) strtol(argv[2], (char **)NULL, 10);
+        block_size = (int) strtol(argv[3], (char **)NULL, 10);
 
         if(block_size % rec_size != 0)
         {
@@ -99,6 +100,7 @@ int main(int argc, char *argv[])
         if (curr_run != (num_chunks - 1) || (is_leftover_bytes == 0)) 
         {
             handle_fread_fwrite(total_recs_in_mem, "fread", buffer, rec_size, total_recs_in_mem, file); 
+            qsort(buffer, total_recs_in_mem, rec_size, compare);
         } else if ((curr_run == (num_chunks - 1)) && (is_leftover_bytes != 0))
         {
             // If there are some leftover bytes to read, read them. 
@@ -115,9 +117,11 @@ int main(int argc, char *argv[])
                 fclose(file);
                 exit(1);
             } 
+            /* Only sort the number of records leftover (we don't want to sort
+             * any 0 records.
+             */
+            qsort(buffer, bytes_read, 1, compare);
         }
-        // Quick sort the buffer (Phase I)
-        qsort(buffer, total_recs_in_mem, rec_size, compare);
 
         fwrite(buffer, rec_size, total_recs_in_mem, file_write); 
          
@@ -145,18 +149,22 @@ int main(int argc, char *argv[])
     int recs_per_block = block_size/rec_size;
     // +1 to account for output buffer space
     int recs_per_buffer = recs_per_block * (blocks_in_mem / (num_chunks + 1));
-    mananger->input_buffer_capacity = recs_per_buffer;
+    manager->input_buffer_capacity = recs_per_buffer;
 
     while (i < heap_cap)
     {
         input_file_numbers[i] = i;
-        input_buffers[i] = (Record *)calloc(recs_per_buffer, rec_size);
+        current_input_file_positions[i] = 0;
+        current_input_buffer_positions[i] = 0;
+        total_input_buffer_elements[i] = 0;
+        input_buffers[i] = (Record *)calloc(manager->input_buffer_capacity, rec_size);
         i = i + 1;
     }
     manager->input_file_numbers = input_file_numbers; 
     manager->current_input_file_positions = current_input_file_positions;
     manager->current_input_buffer_positions = current_input_buffer_positions;
     manager->total_input_buffer_elements = total_input_buffer_elements;
+    manager->input_buffers = input_buffers;
 
 
     // Initialize output fields
@@ -172,6 +180,8 @@ int main(int argc, char *argv[])
 
     strcpy(manager->output_file_name, "entire_sorted.dat");
     strcpy(manager->input_prefix, "sorted");
+
+    manager->current_heap_size = 0;
     
     merge_runs(manager);
     

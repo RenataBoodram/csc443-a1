@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "merge.h"
 
 //manager fields should be already initialized in the caller
@@ -141,7 +142,6 @@ int init_merge (MergeManager * manager) {
         }
 
         fseek(file, manager->current_input_file_positions[i]*rec_size, SEEK_SET);
-
         // Read in initial input buffer elements 
         int bytes_read = fread(manager->input_buffers[i], rec_size, manager->input_buffer_capacity, file);
         if (bytes_read <= 0)
@@ -153,7 +153,13 @@ int init_merge (MergeManager * manager) {
         manager->total_input_buffer_elements[i] = bytes_read;
         // Insert
         int curr_buff_pos = manager->current_input_buffer_positions[i];
-        insert_into_heap(manager, manager->input_file_numbers[i], &manager->input_buffers[i][curr_buff_pos]);
+        int insert = insert_into_heap(manager, manager->input_file_numbers[i], &manager->input_buffers[i][curr_buff_pos]);
+        if (insert != SUCCESS)
+        {
+            free(filename);
+            return FAILURE;
+        }
+        manager->current_input_buffer_positions[i]++;
 
         fclose(file);
         free(filename);
@@ -185,6 +191,7 @@ int get_next_input_element(MergeManager * manager, int file_number, Record *resu
     // If the position has moved to the end 
     if (manager->current_input_buffer_positions[file_number] == manager->total_input_buffer_elements[file_number]) 
     {
+        manager->current_input_buffer_positions[file_number] = 0;
         int refill = refill_buffer(manager, file_number);
         if (refill != SUCCESS)
         {
