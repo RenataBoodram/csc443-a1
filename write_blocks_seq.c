@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 	}
         records_per_block = block_size / rec_size;
     }
-    const char *output_filename = "/data/scratch/boodram8/records.dat"; 
+    const char *output_filename = "records.dat"; 
     FILE *file = fopen(input_file, "r");
     FILE *output_file = fopen(output_filename, "wb");
 
@@ -49,19 +49,20 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    ssize_t read; // Check status  of reading input file
-    char *line = NULL; // Holds line of input file
-    size_t n = 0;
+    //ssize_t read; // Check status  of reading input file
+    char *curr_line;
+    char line[1024]; // Holds line of input file
+    //size_t n = 0;
     struct timeb t_begin, t_end;
     Record *buffer = (Record *) calloc(records_per_block, rec_size);
-    Record *rec = malloc(rec_size);
+    //Record *rec = malloc(rec_size);
     int recs_so_far = 0; // Total records written so far
     long total_records = 0;
     ftime(&t_begin);
-    while ((read = getline(&line, &n, file)) != -1) 
+    while ((curr_line = fgets(line, 1024, file)) != NULL)
     {
         // Remove end-of-line characters
-        line [strcspn (line, "\r\n")] = '\0';
+        curr_line [strcspn (curr_line, "\r\n")] = '\0';
         // Check if buffer is full
         if (recs_so_far == records_per_block)
         {
@@ -70,10 +71,12 @@ int main(int argc, char *argv[])
             recs_so_far = 0;
         }
         char *str_arr[2];
-        parse_line(line, str_arr);
-        line_to_record(rec, str_arr);
-        memcpy(buffer + recs_so_far, (const void *) rec, 
-            rec_size);
+        parse_line(curr_line, str_arr);
+        //line_to_record(rec, str_arr);
+        //memcpy(buffer + recs_so_far, (const void *) rec, 
+        //    rec_size);
+        buffer[recs_so_far].uid1 = (int) strtol(str_arr[0], (char **)NULL, 10);
+        buffer[recs_so_far].uid2 = (int) strtol(str_arr[1], (char **)NULL, 10); 
         recs_so_far++;
         total_records++;
     }
@@ -87,7 +90,7 @@ int main(int argc, char *argv[])
     ftime(&t_end);
     fclose(output_file); 
     fclose(file);
-    free(rec);
+    //free(rec);
     free(buffer);
 
     print_vals(t_begin, t_end, (total_records * rec_size), 0, 0);
