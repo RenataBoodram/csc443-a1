@@ -122,7 +122,44 @@ int insert_into_heap (MergeManager * merger, int run_id, Record *input){
 */
 
 int init_merge (MergeManager * manager) {
-    // TODO: implement
+    int i = 0;
+    while (i < manager->heap_capacity)
+    {
+        char file_num[4];
+        char *filename = calloc(14, sizeof(char));
+        sprintf(file_num, "%d", manager->input_file_numbers[i]);
+        strncpy(filename, manager->input_prefix, 6 * sizeof(char)); 
+        strncpy(filename + 6, file_num, 1 * sizeof(char));
+        strncpy(filename + 7, ".dat", 4 * sizeof(char));
+
+        FILE *file = fopen(filename, "rb");
+        if (!file) 
+        {
+             printf("Could not open file for reading.\n");
+             free(filename);
+             return FAILURE;
+        }
+
+        fseek(file, manager->current_input_file_positions[i]*rec_size, SEEK_SET);
+
+        // Read in initial input buffer elements 
+        int bytes_read = fread(manager->input_buffers[i], rec_size, manager->input_buffer_capacity, file);
+        if (bytes_read <= 0)
+        {
+            manager->current_heap_size--;
+        }
+        // Change the position because bytes_read bytes have already been read
+        manager->current_input_file_positions[i] = bytes_read;
+        manager->total_input_buffer_elements[i] = bytes_read;
+        // Insert
+        int curr_buff_pos = manager->current_input_buffer_positions[i];
+        insert_into_heap(manager, manager->input_file_numbers[i], &manager->input_buffers[i][curr_buff_pos]);
+
+        fclose(file);
+        free(filename);
+        i = i + 1;
+    }
+    
     return SUCCESS;
 }
 
@@ -145,24 +182,77 @@ int flush_output_buffer (MergeManager * manager) {
 }
 
 int get_next_input_element(MergeManager * manager, int file_number, Record *result) {
-    // TODO: implement 
+    // If the position has moved to the end 
+    if (manager->current_input_buffer_positions[file_number] == manager->total_input_buffer_elements[file_number]) 
+    {
+        int refill = refill_buffer(manager, file_number);
+        if (refill != SUCCESS)
+        {
+             return FAILURE;
+        } else {
+             // Check if run is complete
+             if (manager->current_input_file_positions[file_number] == -1)
+             {
+                 return EMPTY;
+             }
+        } 
+
+    }
+    int curr_pos = manager->current_input_buffer_positions[file_number];
+    *result = manager->input_buffers[file_number][curr_pos];
+    manager->current_input_buffer_positions[file_number] = manager->current_input_buffer_positions[file_number] + 1;
     return SUCCESS;
 }
 
 int refill_buffer (MergeManager * manager, int file_number) {
-    // TODO: implement
-	return SUCCESS;
+    FILE *file;
+    char file_num[4];
+    sprintf(file_num, "%d", manager->input_file_numbers[file_number]);
+    char *filename = calloc(14, sizeof(char)); 
+    strncpy(filename, "sorted", 6);
+    strncpy(filename + 6, file_num, 1 * sizeof(char));
+    strncpy(filename + 7, ".dat", 4 * sizeof(char));
+    file = fopen(filename, "rb");
+    if (!file) 
+    {
+        printf("File could not be opened for reading.\n");
+        free(filename);
+        return FAILURE; 
+    }
+
+    // Seek to correct position for file.
+    fseek(file, manager->current_input_file_positions[file_number] * rec_size, SEEK_SET);
+    // Read into the buffer associated with this run
+    int bytes_read = fread(manager->input_buffers[file_number], rec_size, manager->input_buffer_capacity, file);
+    if (bytes_read > 0)
+    {
+        manager->current_input_file_positions[file_number] += bytes_read;
+        manager->total_input_buffer_elements[file_number] = bytes_read;
+    } else if (bytes_read == 0)
+    {
+        // Run is complete so set it to -1
+        manager->current_input_file_positions[file_number] = -1;
+    } else {
+        printf("Could not read from file.\n");
+        free(filename);
+        return FAILURE;
+    }
+
+    return SUCCESS;
 }
 
 void clean_up (MergeManager * merger) {
     free(merger->heap);
     int i = 0;
+    // Free all input buffers
     while (i < merger->heap_capacity)
     {
         free(merger->input_buffers[i]);
         i = i + 1;
     }
+    // Free output buffer
     free(merger->output_buffer); 
+    // Free the merger manager itself
     free(merger);
 }
 

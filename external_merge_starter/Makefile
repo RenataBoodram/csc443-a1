@@ -1,5 +1,5 @@
 #SOURCES = write_blocks_seq write_lines read_blocks_seq read_ram_seq read_blocks_rand read_ram_rand write_blocks_rand write_ram_rand
-SOURCES = disk_sort main
+SOURCES = main
 
 all : utils $(SOURCES)
 
@@ -32,7 +32,7 @@ utils : $(SOURCECODE) utils.c merge_external.c
 #	$(CC) -c $(CFLAGS) $^ 
 
 $(SOURCES) : $(OBJS) utils.o merge_external.o
-	$(CC) $(CFLAGS) $@.o utils.o merge_external.o -o $@ 
+	$(CC) $(CFLAGS) $@.o utils.o merge_external.o -o disk_sort 
 
 clean:
 	rm -f *.o $(SOURCES) 

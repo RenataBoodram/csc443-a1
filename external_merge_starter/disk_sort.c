@@ -24,7 +24,6 @@ int main(int argc, char *argv[])
     char *input_file;
     int total_mem = 0;
     int block_size = 0;
-    int recs_per_block = 0;
 
     if (argc != 4)
     {
@@ -40,10 +39,7 @@ int main(int argc, char *argv[])
             printf("%d is not a valid block size. Must be a multiple of 8.\n",
                 block_size);
             exit(1);
-        } else
-        {
-            recs_per_block = block_size / rec_size;
-        }
+        } 
     }
 
     FILE *file = fopen(input_file, "rb");
@@ -57,20 +53,17 @@ int main(int argc, char *argv[])
 
     // Find number of blocks, each of size block_size that memory can hold
     int blocks_in_mem = total_mem/block_size;
-    // Divide the file into num_chunks chunks
+    // Find number of times the file has to be partitioned
     int num_chunks = file_size/(blocks_in_mem * block_size);
-
-    /* If the file_size isn't perfectly divisible by blocks_in_mem, add
-     * an extra chunk (note how chunks are equivalent to the number of
-     * "runs" we must do. 
-     */ 
     int is_leftover_bytes = file_size % (blocks_in_mem * block_size);
-    if (is_leftover_bytes != 0) 
+    // Account for leftover bytes if the file is not perfectly divisible
+    if (is_leftover_bytes != 0)
     {
-        num_chunks = num_chunks + 1;
+        num_chunks = num_chunks + 1; 
     }
 
-    if ((num_chunks*block_size) > total_mem)
+    // +1 for output buffer
+    if (((num_chunks + 1)*block_size) > total_mem)
     {
         printf("Not enough memory to perform 2PMMS. Exiting\n");
         fclose(file);
@@ -78,11 +71,11 @@ int main(int argc, char *argv[])
     }
 
     // Total number of records that can be held in memory at one time
-    int total_recs_in_mem = blocks_in_mem * recs_per_block; 
+    int total_recs_in_mem = total_mem/rec_size; 
     int curr_run = 0;
     // Phase 1
     // Up to 10 characters for sortedXXX\0
-    char *filename = calloc(10, sizeof(char));
+    char *filename = calloc(14, sizeof(char));
     strncpy(filename, "sorted", 6); 
     while (curr_run < num_chunks) 
     {
@@ -90,6 +83,7 @@ int main(int argc, char *argv[])
         sprintf(file_num, "%d", curr_run);
         // Create a new file to write to 
         strncpy(filename + 6, file_num, 1 * sizeof(char));
+        strncpy(filename + 7, ".dat", 4 * sizeof(char));
          
         FILE *file_write = fopen(filename, "wb");
         if (!file_write) 
@@ -135,7 +129,51 @@ int main(int argc, char *argv[])
     free(filename);
     fclose(file);
 
-    // TODO: mergesort the different chunks we have (req of 1.2 Producing sorted runs) - Phase I of 2PMMS
+    // Initialize MergeManager fields for Phase II
+    MergeManager *manager = (MergeManager *)malloc(sizeof(MergeManager));
+    int heap_cap = num_chunks;
+    manager->heap_capacity = heap_cap;
+    manager->heap = (HeapElement *)calloc(heap_cap, sizeof(HeapElement));
+
+    int i = 0;
+    int input_file_numbers[heap_cap];
+    int current_input_file_positions[heap_cap]; // all 0s
+    int current_input_buffer_positions[heap_cap]; // all 0s 
+    int total_input_buffer_elements[heap_cap];
+
+    Record **input_buffers = calloc(heap_cap, rec_size);
+    int recs_per_block = block_size/rec_size;
+    // +1 to account for output buffer space
+    int recs_per_buffer = recs_per_block * (blocks_in_mem / (num_chunks + 1));
+    mananger->input_buffer_capacity = recs_per_buffer;
+
+    while (i < heap_cap)
+    {
+        input_file_numbers[i] = i;
+        input_buffers[i] = (Record *)calloc(recs_per_buffer, rec_size);
+        i = i + 1;
+    }
+    manager->input_file_numbers = input_file_numbers; 
+    manager->current_input_file_positions = current_input_file_positions;
+    manager->current_input_buffer_positions = current_input_buffer_positions;
+    manager->total_input_buffer_elements = total_input_buffer_elements;
+
+
+    // Initialize output fields
+    manager->output_buffer_capacity = recs_per_buffer;
+    // Check if there is an extra buffer available
+    int num_extra_buff = blocks_in_mem % (num_chunks + 1);
+    if (num_extra_buff != 0)
+    {
+        manager->output_buffer_capacity = recs_per_buffer + (num_extra_buff *recs_per_block);
+    }
+    manager->output_buffer = (Record *)calloc(manager->output_buffer_capacity, rec_size); 
+    manager->current_output_buffer_position = 0; // Starts here
+
+    strcpy(manager->output_file_name, "entire_sorted.dat");
+    strcpy(manager->input_prefix, "sorted");
+    
+    merge_runs(manager);
     
     return 0;     
 }
