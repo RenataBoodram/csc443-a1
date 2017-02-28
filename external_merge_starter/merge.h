@@ -34,6 +34,10 @@ int find_file_size(FILE *file);
 void handle_fread_fwrite(int bytes, const char *func, void *ptr, size_t size,
     size_t nmemb, FILE *stream);
 
+/* Counts the number of in- or out-degrees. */
+void get_deg_count(Record *buffer, int cond, int *cur_user_id, int *counts_ind, 
+    char *col_id, int *counts);
+
 //Record-keeping struct, to pass around to all small functions
 //has to be initialized before merge starts
 typedef struct merge_manager {

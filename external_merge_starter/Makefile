@@ -1,5 +1,4 @@
-#SOURCES = write_blocks_seq write_lines read_blocks_seq read_ram_seq read_blocks_rand read_ram_rand write_blocks_rand write_ram_rand
-SOURCES = main
+SOURCES = main distribution
 
 all : utils $(SOURCES)
 
@@ -28,11 +27,11 @@ OBJS = $(patsubst %, %.o, $(SOURCES))
 utils : $(SOURCECODE) utils.c merge_external.c
 	$(CC) -c $(CFLAGS) $^
 
-#merge_external : main.c merge_external.c
-#	$(CC) -c $(CFLAGS) $^ 
-
-$(SOURCES) : $(OBJS) utils.o merge_external.o
+main : $(OBJS) utils.o merge_external.o
 	$(CC) $(CFLAGS) $@.o utils.o merge_external.o -o disk_sort 
+
+distribution : $(OBJS) utils.o merge_external.o
+	$(CC) $(CFLAGS) $@.o utils.o merge_external.o -o distribution 
 
 clean:
 	rm -f *.o $(SOURCES) 

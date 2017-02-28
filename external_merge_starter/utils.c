@@ -128,15 +128,10 @@ void get_max_avg(Record *buffer, int cond, int *max, int *unique_users,
 }
 
 void get_deg_count(Record *buffer, int cond, int *cur_user_id, int *counts_ind, char *col_id, int *counts)
-//int *max, int *unique_users,
-//    int *total_follows, int *cur_user_id, int *cur_user_follow_count)
 {
-    /* Note: cur_user_id keeps track of the current ID
-     *       cur_user_follow_count keeps track of the number of followers for
-     *       the current user.
-     */
     int i = 0;
     int curr_id = -1;
+    int reset = 0;
     while (i < cond)
     {
         printf("READ: %d,%d\n", buffer[i].UID1, buffer[i].UID2);
@@ -148,8 +143,6 @@ void get_deg_count(Record *buffer, int cond, int *cur_user_id, int *counts_ind, 
             curr_id = buffer[i].UID2;
         }
 
-      
-
         // If the current user id has never been set, set it
         if (*cur_user_id == -1) {
             *cur_user_id = curr_id;
@@ -157,15 +150,18 @@ void get_deg_count(Record *buffer, int cond, int *cur_user_id, int *counts_ind, 
         } else if (*cur_user_id != curr_id)
         {
             counts[*counts_ind] = counts[*counts_ind] + 1;
-            //*cur_user_id = buffer[i].UID1;
             *cur_user_id = curr_id;
-            // Reset the counts_ind
+            // Reset the counts_ind for the next cur_user_id
             *counts_ind = 0;
+            reset = 1;
         }
         /* Keep incrementing the counter in the counts array. The value of 
          * counts[counts_ind] won't change until we change it.
          */
-        *counts_ind = *counts_ind + 1;
+        if (reset != 1) {
+             *counts_ind = *counts_ind + 1;
+        }
+        reset = 0;
 
         i++;
     }

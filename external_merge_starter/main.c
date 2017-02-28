@@ -51,6 +51,8 @@ int main(int argc, char *argv[])
     }
 
     int file_size = find_file_size(file);
+    // Halve the total_mem to account for qsort
+    total_mem = total_mem / 2;
 
     // Find number of blocks, each of size block_size that memory can hold
     int blocks_in_mem = total_mem/block_size;
