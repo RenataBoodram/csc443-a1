@@ -127,7 +127,7 @@ void get_max_avg(Record *buffer, int cond, int *max, int *unique_users,
 
 }
 
-void get_deg_count(Record *buffer, int cond, int *cur_user_id, int *cur_user_deg_count, char *col_id, int *counts)
+void get_deg_count(Record *buffer, int cond, int *cur_user_id, int *counts_ind, char *col_id, int *counts)
 //int *max, int *unique_users,
 //    int *total_follows, int *cur_user_id, int *cur_user_follow_count)
 {
@@ -156,19 +156,16 @@ void get_deg_count(Record *buffer, int cond, int *cur_user_id, int *cur_user_deg
         // Check if cur_user_id is the same as the current ID
         } else if (*cur_user_id != curr_id)
         {
-            counts[i] = counts[i] + 1;
+            counts[*counts_ind] = counts[*counts_ind] + 1;
             //*cur_user_id = buffer[i].UID1;
             *cur_user_id = curr_id;
-            //*unique_users = *unique_users + 1;
-            // Reset the follow count of the current user to 1
-            *cur_user_follow_count = 1;
-        } else {
-
-            /* If the same user is being tracked, keep track of their
-             * follow count.
-             */
-            *cur_user_follow_count = *cur_user_follow_count + 1;
+            // Reset the counts_ind
+            *counts_ind = 0;
         }
+        /* Keep incrementing the counter in the counts array. The value of 
+         * counts[counts_ind] won't change until we change it.
+         */
+        *counts_ind = *counts_ind + 1;
 
         i++;
     }
