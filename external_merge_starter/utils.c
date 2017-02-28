@@ -127,6 +127,55 @@ void get_max_avg(Record *buffer, int cond, int *max, int *unique_users,
 
 }
 
+void get_deg_count(Record *buffer, int cond, int *cur_user_id, int *cur_user_deg_count, char *col_id, int *counts)
+//int *max, int *unique_users,
+//    int *total_follows, int *cur_user_id, int *cur_user_follow_count)
+{
+    /* Note: cur_user_id keeps track of the current ID
+     *       cur_user_follow_count keeps track of the number of followers for
+     *       the current user.
+     */
+    int i = 0;
+    int curr_id = -1;
+    while (i < cond)
+    {
+        printf("READ: %d,%d\n", buffer[i].UID1, buffer[i].UID2);
+        if (strcmp(col_id, "UID1") == 0) 
+        {
+            curr_id = buffer[i].UID1;
+        } else if (strcmp(col_id, "UID2") == 0) 
+        {
+            curr_id = buffer[i].UID2;
+        }
+
+      
+
+        // If the current user id has never been set, set it
+        if (*cur_user_id == -1) {
+            *cur_user_id = curr_id;
+        // Check if cur_user_id is the same as the current ID
+        } else if (*cur_user_id != curr_id)
+        {
+            counts[i] = counts[i] + 1;
+            //*cur_user_id = buffer[i].UID1;
+            *cur_user_id = curr_id;
+            //*unique_users = *unique_users + 1;
+            // Reset the follow count of the current user to 1
+            *cur_user_follow_count = 1;
+        } else {
+
+            /* If the same user is being tracked, keep track of their
+             * follow count.
+             */
+            *cur_user_follow_count = *cur_user_follow_count + 1;
+        }
+
+        i++;
+    }
+
+}
+
+
 /* Prints total data rate time. Prints avg and max values if non-zero. */
 void print_vals(struct timeb t_begin, struct timeb t_end, int total_bytes, int max, float avg)
 {
