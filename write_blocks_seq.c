@@ -33,7 +33,8 @@ int main(int argc, char *argv[])
 	}
         records_per_block = block_size / rec_size;
     }
-    const char *output_filename = "records.dat"; 
+    //const char *output_filename = "/data/scratch/boodram8/records.dat"; 
+    const char *output_filename = "records.dat";
     FILE *file = fopen(input_file, "r");
     FILE *output_file = fopen(output_filename, "wb");
 
