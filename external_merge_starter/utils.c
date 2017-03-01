@@ -131,10 +131,9 @@ void get_deg_count(Record *buffer, int cond, int *cur_user_id, int *counts_ind, 
 {
     int i = 0;
     int curr_id = -1;
-    int reset = 0;
     while (i < cond)
     {
-        printf("READ: %d,%d\n", buffer[i].UID1, buffer[i].UID2);
+        //printf("READ: %d,%d\n", buffer[i].UID1, buffer[i].UID2);
         if (strcmp(col_id, "UID1") == 0) 
         {
             curr_id = buffer[i].UID1;
@@ -153,15 +152,11 @@ void get_deg_count(Record *buffer, int cond, int *cur_user_id, int *counts_ind, 
             *cur_user_id = curr_id;
             // Reset the counts_ind for the next cur_user_id
             *counts_ind = 0;
-            reset = 1;
         }
         /* Keep incrementing the counter in the counts array. The value of 
          * counts[counts_ind] won't change until we change it.
          */
-        if (reset != 1) {
-             *counts_ind = *counts_ind + 1;
-        }
-        reset = 0;
+        *counts_ind = *counts_ind + 1;
 
         i++;
     }

@@ -70,13 +70,14 @@ int main(int argc, char *argv[])
          get_deg_count(buffer, (num_recs/rec_size), &cur_user_id, &cur_user_count, col_id, counts); 
         
     }
+    counts[cur_user_count] = counts[cur_user_count] + 1;
 
     fclose(file);
     free(buffer);
 
     // Print out the values
     int counts_ind = 0;
-    while (counts_ind < (max_deg + 1))
+    while (counts_ind < max_deg + 1)
     {
         printf("(%d, %d)\n", counts_ind, counts[counts_ind]);
         counts_ind = counts_ind + 1;
