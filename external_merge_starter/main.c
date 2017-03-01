@@ -103,12 +103,14 @@ int main(int argc, char *argv[])
         {
             handle_fread_fwrite(total_recs_in_mem, "fread", buffer, rec_size, total_recs_in_mem, file); 
             qsort(buffer, total_recs_in_mem, rec_size, compare);
+            fwrite(buffer, rec_size, total_recs_in_mem, file_write);
         } else if ((curr_run == (num_chunks - 1)) && (is_leftover_bytes != 0))
         {
             // If there are some leftover bytes to read, read them. 
             /* Note to self: fread is called without handle_fread_fwrite
              * because we don't know how many bytes to expect.
              */ 
+            // bytes_read refers to the number of records that we read
             int bytes_read = fread(buffer, rec_size, total_recs_in_mem, file);
             if (bytes_read == 0)
             {
@@ -122,10 +124,10 @@ int main(int argc, char *argv[])
             /* Only sort the number of records leftover (we don't want to sort
              * any 0 records.
              */
-            qsort(buffer, bytes_read, 1, compare);
+            qsort(buffer, bytes_read, rec_size, compare);
+            fwrite(buffer, rec_size, bytes_read, file_write);
         }
-
-        fwrite(buffer, rec_size, total_recs_in_mem, file_write); 
+        //fwrite(buffer, rec_size, total_recs_in_mem, file_write); 
          
         fclose(file_write);
         free(buffer);
