@@ -34,4 +34,4 @@ distribution : $(OBJS) utils.o merge_external.o
 	$(CC) $(CFLAGS) $@.o utils.o merge_external.o -o distribution 
 
 clean:
-	rm -f *.o $(SOURCES) 
+	rm -f *.o $(SOURCES) disk_sort
