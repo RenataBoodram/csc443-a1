@@ -59,9 +59,14 @@ int main(int argc, char *argv[])
     // Find number of times the file has to be partitioned
     int num_chunks = file_size/(blocks_in_mem * block_size);
     int is_leftover_bytes = file_size % (blocks_in_mem * block_size);
+    // Total records in memory that can be held at one time
+    int total_recs_in_mem = (blocks_in_mem * block_size)/rec_size;
+
     // Account for leftover bytes if the file is not perfectly divisible
+    //int recs_last_block = 0;
     if (is_leftover_bytes != 0)
     {
+        //recs_last_block = file_size % (blocks_in_mem); 
         num_chunks = num_chunks + 1; 
     }
 
@@ -73,21 +78,20 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    // Total number of records that can be held in memory at one time
-    int total_recs_in_mem = total_mem/rec_size; 
     int curr_run = 0;
     // Phase 1
     // Up to 10 characters for sortedXXX\0
-    char *filename = calloc(14, sizeof(char));
+    char *filename = calloc(15, sizeof(char));
     strncpy(filename, "sorted", 6); 
     while (curr_run < num_chunks) 
     {
-        char file_num[4];
+        char file_num[3 * sizeof(int)];
         sprintf(file_num, "%d", curr_run);
         // Create a new file to write to 
-        strncpy(filename + 6, file_num, 1 * sizeof(char));
-        strncpy(filename + 7, ".dat", 4 * sizeof(char));
-         
+        strncpy(filename + 6, file_num, 3 * sizeof(char));
+        strncpy(filename + 10, ".dat", 4 * sizeof(char));
+       
+        
         FILE *file_write = fopen(filename, "wb");
         if (!file_write) 
         {
@@ -111,7 +115,10 @@ int main(int argc, char *argv[])
              * because we don't know how many bytes to expect.
              */ 
             // bytes_read refers to the number of records that we read
+            //int bytes_read = fread(buffer, rec_size, recs_last_block, file);
             int bytes_read = fread(buffer, rec_size, total_recs_in_mem, file);
+            //printf("%d read\n", bytes_read);
+            //printf("%d\n", total_recs_in_mem);
             if (bytes_read == 0)
             {
                 printf("fread returned 0 bytes when we expected to read some"

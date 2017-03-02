@@ -126,16 +126,17 @@ int init_merge (MergeManager * manager) {
     int i = 0;
     while (i < manager->heap_capacity)
     {
-        char file_num[4];
-        char *filename = calloc(14, sizeof(char));
+        char file_num[3 * sizeof(int)];
+        char *filename = calloc(15, sizeof(char));
         sprintf(file_num, "%d", manager->input_file_numbers[i]);
         strncpy(filename, manager->input_prefix, 6 * sizeof(char)); 
-        strncpy(filename + 6, file_num, 1 * sizeof(char));
-        strncpy(filename + 7, ".dat", 4 * sizeof(char));
+        strncpy(filename + 6, file_num, 3 * sizeof(char));
+        strncpy(filename + 10, ".dat", 4 * sizeof(char));
 
         FILE *file = fopen(filename, "rb");
         if (!file) 
         {
+             perror("Error in init_merge");
              printf("Could not open file for reading.\n");
              free(filename);
              return FAILURE;
@@ -174,6 +175,7 @@ int flush_output_buffer (MergeManager * manager) {
     FILE *file_write = fopen(manager->output_file_name, "a");
     if (!file_write)
     {
+        perror("Error in flush_output_buffer");
         printf("Could not open file %s for writing.\n", manager->output_file_name);
         return FAILURE;
     }
@@ -213,15 +215,16 @@ int get_next_input_element(MergeManager * manager, int file_number, Record *resu
 
 int refill_buffer (MergeManager * manager, int file_number) {
     FILE *file;
-    char file_num[4];
+    char file_num[3 * sizeof(int)];
     sprintf(file_num, "%d", manager->input_file_numbers[file_number]);
-    char *filename = calloc(14, sizeof(char)); 
+    char *filename = calloc(15, sizeof(char)); 
     strncpy(filename, "sorted", 6);
-    strncpy(filename + 6, file_num, 1 * sizeof(char));
-    strncpy(filename + 7, ".dat", 4 * sizeof(char));
+    strncpy(filename + 6, file_num, 3 * sizeof(char));
+    strncpy(filename + 10, ".dat", 4 * sizeof(char));
     file = fopen(filename, "rb");
     if (!file) 
     {
+        perror("Error in refill_buffer");
         printf("File could not be opened for reading.\n");
         free(filename);
         return FAILURE; 
@@ -244,6 +247,7 @@ int refill_buffer (MergeManager * manager, int file_number) {
         free(filename);
         return FAILURE;
     }
+    fclose(file);
 
     return SUCCESS;
 }
