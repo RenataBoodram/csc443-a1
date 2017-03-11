@@ -1,0 +1,58 @@
+INTRODUCTION
+- Goals
+    - List and count of "TRUE FRIENDS"
+    - List of top 10 "CELEBRITIES" sorted by DEGREE OF FAME in descending order
+- Required tasks: implement self-join and compare its performance with a real database
+
+- Definitions
+    - SYMMETRIC / TRUE FRIENDS: User A follows B and B follows A
+    - CELEBRITY: Large in-degree and small out-degree
+    - DEGREE OF FAME: measure by taking difference between the in- and 
+                      out-degree
+-------------------------------------------------------------------------------
+
+STEP 1: EXPRESSING QUERIES IN SQL
+- 1. Create a database using SQLite and import data from the CSV file.
+- 2. Time execution of queries to list the "true friends" and "celebrities" as
+     described in introduction. Make sure to record the results (to check
+     correctness of implementation).
+
+-------------------------------------------------------------------------------
+
+STEP 2: IMPLEMENTING QUERIES
+- 1. Implement both queries as a separate program. There will be a large
+     amount of code overlap.
+
+REQUIREMENTS / RESTRICTIONS
+- 200MB of main memory
+- Input: binary file
+- Choose any algorithm in class: Block Nested-Loop Join, Sort-Merge Join,
+  or Hash-join
+  - Optionally Index Join - BUT this requires you to build 2 indices first
+    which requires the techniques of sorting or hashing. Also, time to build
+    index will be timed.
+  - Sort-Merge Join requires that the file be sorted by UID1 first.
+- May reuse 2PMMS code
+
+-------------------------------------------------------------------------------
+
+STEP 3: REPORTS
+- 1. Record total number of true friends vs. total number of distinct users
+- 2. Record list of top 10 celebrities and their in- and out-degrees.
+- 3. Write conclusion about what you learned about the users in this dataset
+     or if there is anything interesting you learned.
+
+- 4. Compare running time to SQLite database run time. Plot the performance
+     difference at the end of the A1.1 report.
+- 5. Write about the difference/similarity in performance at the end of A1.1
+     report.
+- 6. Write brief summary about performance results. Include what you have 
+     learned about working with large inputs.
+
+-------------------------------------------------------------------------------
+
+DELIVERABLES: ass1-3.tar.gz, research_report.pdf (from A1.2) - final report
+              will contain numeric results of all A1.X parts & comparison of
+              performance and memory consumption.
+
+-------------------------------------------------------------------------------
