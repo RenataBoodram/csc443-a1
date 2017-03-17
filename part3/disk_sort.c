@@ -11,17 +11,32 @@
 * zero: equal records
 * Credit: Marina Barsky for function
 */
-int compare (const void *a, const void *b, int sortby) 
+int compare_uid1 (const void *a, const void *b) 
 {
-    if (sortby == 1) 
-    {
-        int a_f = ((const Record*)a)->UID1;
-        int b_f = ((const Record*)b)->UID1;
-    } else {
-        int a_f = ((const Record*)a)->UID2;
-        int b_f = ((const Record*)b)->UID2;
+    int a_uid1 = ((const Record*)a)->UID1;
+    int a_uid2 = ((const Record*)a)->UID2;
+    int b_uid1 = ((const Record*)b)->UID1;
+    int b_uid2 = ((const Record*)b)->UID2;
+    // Check if UID2s of the corresponding UID1 are sorted
+    if (a_uid1 == b_uid1) {
+        // Sort by UID2 if the UID1 is the same
+        return (a_uid2 - b_uid2);
     }
-    return (a_f - b_f);
+    return (a_uid1 - b_uid1);
+}
+
+int compare_uid2 (const void *a, const void *b)
+{
+    int a_uid1 = ((const Record*)a)->UID1;
+    int a_uid2 = ((const Record*)a)->UID2;
+    int b_uid1 = ((const Record*)b)->UID1;
+    int b_uid2 = ((const Record*)b)->UID2;
+
+    // Also need to make sure UID2s are in correct order
+    if (a_uid2 == b_uid2) {
+        return (a_uid1 - b_uid1);
+    }
+    return (a_uid2 - b_uid2);
 }
 
 //int main(int argc, char *argv[]) 
@@ -62,8 +77,8 @@ int disk_sort(char *input_file, int sortby)
     }
 
     int file_size = find_file_size(file);
-    // Halve the total_mem to account for qsort
-    total_mem = total_mem / 2;
+    // Halve the total_mem to account for qsort - only needed for A1.2
+//    total_mem = total_mem / 2;
 
     // Find number of blocks, each of size block_size that memory can hold
     int blocks_in_mem = total_mem/block_size;
@@ -117,7 +132,12 @@ int disk_sort(char *input_file, int sortby)
         if (curr_run != (num_chunks - 1) || (is_leftover_bytes == 0)) 
         {
             handle_fread_fwrite(total_recs_in_mem, "fread", buffer, rec_size, total_recs_in_mem, file); 
-            qsort(buffer, total_recs_in_mem, rec_size, compare);
+            if (sortby == 1)
+            {
+                qsort(buffer, total_recs_in_mem, rec_size, compare_uid1);
+            } else {
+                qsort(buffer, total_recs_in_mem, rec_size, compare_uid2);
+            }
             fwrite(buffer, rec_size, total_recs_in_mem, file_write);
         } else if ((curr_run == (num_chunks - 1)) && (is_leftover_bytes != 0))
         {
@@ -142,7 +162,12 @@ int disk_sort(char *input_file, int sortby)
             /* Only sort the number of records leftover (we don't want to sort
              * any 0 records.
              */
-            qsort(buffer, bytes_read, rec_size, compare);
+            if (sortby == 1) 
+            {
+                qsort(buffer, bytes_read, rec_size, compare_uid1);
+            } else {
+                qsort(buffer, bytes_read, rec_size, compare_uid2);
+            }
             fwrite(buffer, rec_size, bytes_read, file_write);
         }
         //fwrite(buffer, rec_size, total_recs_in_mem, file_write); 
@@ -200,10 +225,16 @@ int disk_sort(char *input_file, int sortby)
     manager->output_buffer = (Record *)calloc(manager->output_buffer_capacity, rec_size); 
     manager->current_output_buffer_position = 0; // Starts here
 
-    strcpy(manager->output_file_name, "entire_sorted.dat");
+    if (sortby == 1) {
+        strcpy(manager->output_file_name, "entire_sorted1.dat");
+    } else {
+        strcpy(manager->output_file_name, "entire_sorted2.dat");
+    }
     strcpy(manager->input_prefix, "sorted");
 
+
     manager->current_heap_size = 0;
+    manager->sortedby = sortby; // Added field to sort the heap by
     
     merge_runs(manager);
     

@@ -69,14 +69,18 @@ int get_top_heap_element (MergeManager * merger, HeapElement * result){
 	item = merger->heap [--merger->current_heap_size]; // to be reinserted 
 
 	parent =0;
+        int compared = 0;
+        int compared_larger = 0;
 	while ((child = (2 * parent) + 1) < merger->current_heap_size) {
+                compared = compare_heap_elements(&(merger->heap[child]),&(merger->heap[child + 1]), merger->sortedby);
+                compared_larger = compare_heap_elements(&item, &(merger->heap[child]), merger->sortedby);
 		// if there are two children, compare them 
-		if (child + 1 < merger->current_heap_size && 
-				(compare_heap_elements(&(merger->heap[child]),&(merger->heap[child + 1]))>0)) 
+		if (child + 1 < merger->current_heap_size && (compared > 0))
+		//		(compare_heap_elements(&(merger->heap[child]),&(merger->heap[child + 1]))>0)) 
 			++child;
 		
 		// compare item with the larger 
-		if (compare_heap_elements(&item, &(merger->heap[child]))>0) {
+		if (compared_larger>0) {
 			merger->heap[parent] = merger->heap[child];
 			parent = child;
 		} 
@@ -103,10 +107,11 @@ int insert_into_heap (MergeManager * merger, int run_id, Record *input){
 	}
   	
 	child = merger->current_heap_size++; /* the next available slot in the heap */
-	
+
 	while (child > 0) {
 		parent = (child - 1) / 2;
-		if (compare_heap_elements(&(merger->heap[parent]),&new_heap_element)>0) {
+                 
+		if (compare_heap_elements(&(merger->heap[parent]),&new_heap_element, merger->sortedby)>0) {
 			merger->heap[child] = merger->heap[parent];
 			child = parent;
 		} 
@@ -267,10 +272,17 @@ void clean_up (MergeManager * merger) {
     free(merger);
 }
 
-int compare_heap_elements (HeapElement *a, HeapElement *b) {
-    if (b->UID2 < a->UID2)
-    {
-        return 1;
-    } 
+int compare_heap_elements (HeapElement *a, HeapElement *b, int sortedby) {
+    if (sortedby == 1) {
+        if (b->UID1 < a->UID1)
+        {
+            return 1;
+        } 
+    } else {
+        if (b->UID2 < a->UID2)
+        {
+            return 1;
+        }
+    }
     return 0;
 }

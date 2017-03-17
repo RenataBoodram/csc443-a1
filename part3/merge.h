@@ -38,6 +38,8 @@ void handle_fread_fwrite(int bytes, const char *func, void *ptr, size_t size,
 void get_deg_count(Record *buffer, int cond, int *cur_user_id, int *counts_ind, 
     char *col_id, int *counts);
 
+int disk_sort(char *input_file, int sortby); 
+
 //Record-keeping struct, to pass around to all small functions
 //has to be initialized before merge starts
 typedef struct merge_manager {
@@ -57,6 +59,7 @@ typedef struct merge_manager {
 	int heap_capacity;  //corresponds to the total number of runs (input buffers)
 	char output_file_name [MAX_PATH_LENGTH]; //stores name of the file to which to write the final output
 	char input_prefix [MAX_PATH_LENGTH] ; //stores the prefix of a path to each run - to concatenate with run id and to read the file
+        int sortedby; // whether the heap is sorted by UID 1 or 2
 }MergeManager;
 
 //1. main loop
@@ -84,6 +87,6 @@ int refill_buffer (MergeManager * manager, int file_number);
 void clean_up (MergeManager * merger);
 
 //9. Application-specific comparison function
-int compare_heap_elements (HeapElement *a, HeapElement *b);
+int compare_heap_elements (HeapElement *a, HeapElement *b, int sortedby);
 
 #endif
