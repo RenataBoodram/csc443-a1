@@ -14,9 +14,11 @@ int main(int argc, char *argv[]) {
     } else {
         orig_input_file = argv[1];
     }
+
+    int num_chunks = 0; 
     
     // Sort the file by UID1
-    disk_sort(orig_input_file, 1);
+//    num_chunks = disk_sort(orig_input_file, 1, 0);
 
     // Delete intermediate sorted files
 
@@ -28,11 +30,14 @@ int main(int argc, char *argv[]) {
         perror("Failed to remove intermediate sort files. Exiting.");
         exit(1);
     }
+
     // Sort the file by UID2
-    disk_sort(orig_input_file, 2);
-    ret_val = system(cmd);
-
-    // Open and scan 2 sorted files
-
+    // Pass in 1 to run Q1
+//    disk_sort(orig_input_file, 2, 1);
+    MergeManager *manager = (MergeManager *)malloc(sizeof(MergeManager));
+    manager->heap_capacity = 2;
+manager->heap = (HeapElement *)calloc(2, sizeof(HeapElement));
+    query_one_setup(manager, 2);
+    
     return 0;
 }

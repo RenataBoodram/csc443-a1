@@ -1,4 +1,4 @@
-SOURCES = q1#main distribution
+SOURCES = q1 #q2main distribution
 
 all : utils $(SOURCES)
 
@@ -24,11 +24,14 @@ endif
 SOURCECODE = $(patsubst %, %.c, $(SOURCES)) 
 OBJS = $(patsubst %, %.o, $(SOURCES))
 
-utils : $(SOURCECODE) utils.c merge_external.c disk_sort.c q1.c
+utils : $(SOURCECODE) utils.c merge_external.c disk_sort.c q1.c 
 	$(CC) -c $(CFLAGS) $^
 
 q1 : q1.o utils.o merge_external.o disk_sort.o
 	$(CC) $(CFLAGS) $@.o utils.o merge_external.o disk_sort.o -o q1 
+
+q2 : q2.o utils.o merge_external.o disk_sort.o distribution.o
+	$(CC) $(CFLAGS) $@.o utils.o merge_external.o disk_sort.o distribution.o -o q2
 
 clean:
 	rm -f *.o $(SOURCES)

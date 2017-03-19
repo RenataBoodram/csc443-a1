@@ -25,6 +25,8 @@ typedef struct HeapElement {
 
 enum {
     rec_size = sizeof(Record),
+    entire_mem = 209715200,
+    blk_size = 8192,  
 };
 
 /* Returns size of file. Terminates on error. */
@@ -38,7 +40,8 @@ void handle_fread_fwrite(int bytes, const char *func, void *ptr, size_t size,
 void get_deg_count(Record *buffer, int cond, int *cur_user_id, int *counts_ind, 
     char *col_id, int *counts);
 
-int disk_sort(char *input_file, int sortby); 
+int disk_sort(char *input_file, int sortby, int query); 
+
 
 //Record-keeping struct, to pass around to all small functions
 //has to be initialized before merge starts
@@ -60,7 +63,13 @@ typedef struct merge_manager {
 	char output_file_name [MAX_PATH_LENGTH]; //stores name of the file to which to write the final output
 	char input_prefix [MAX_PATH_LENGTH] ; //stores the prefix of a path to each run - to concatenate with run id and to read the file
         int sortedby; // whether the heap is sorted by UID 1 or 2
+        int query;
+        int query_one;
+        int query_two;
 }MergeManager;
+
+//int query_one_setup(MergeManager *merger);
+int query_one_setup(MergeManager *manager, int num_chunks);
 
 //1. main loop
 int merge_runs (MergeManager * manager); 
@@ -85,8 +94,13 @@ int refill_buffer (MergeManager * manager, int file_number);
 
 //8. Frees all dynamically allocated memory
 void clean_up (MergeManager * merger);
+void clean_up_everything(MergeManager *merger);
 
 //9. Application-specific comparison function
 int compare_heap_elements (HeapElement *a, HeapElement *b, int sortedby);
+
+int query_one(MergeManager *merger);
+
+int distribution(char *input_file, char *output_file, int degree);
 
 #endif

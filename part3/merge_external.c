@@ -1,4 +1,6 @@
-#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "merge.h"
 
 //manager fields should be already initialized in the caller
@@ -51,6 +53,79 @@ int merge_runs (MergeManager * merger){
 	
 	clean_up(merger);
 	return SUCCESS;	
+}
+
+int query_one(MergeManager *merger) {
+    printf("in query 1\n");
+    if (init_merge(merger) != SUCCESS) {
+        return FAILURE;
+    }
+    
+   // Record *left = malloc(rec_size); 
+   // Record *right = malloc(rec_size);
+    Record left;
+    Record right;
+    // While the run is not complete
+    while (merger->current_input_file_positions[0] != -1 && merger->current_input_file_positions[1] != -1) 
+    {
+        // Get the elements from the left and right relation
+        if (get_next_input_element(merger, 0, &left) != SUCCESS) {
+             printf("FAILED");
+             return FAILURE;
+        }
+        if (get_next_input_element(merger, 1, &right) != SUCCESS) {
+             printf("FAILEDnsjakdns\n");
+             return FAILURE;
+        }
+        int left_uid1 = left.UID1;
+        int left_uid2 = left.UID2;
+        int right_uid1 = right.UID1;
+        int right_uid2 = right.UID2;
+
+        // Only compare them if we have not seen this before
+        if (left_uid1 < left_uid2) {
+            if ((left_uid1 == right_uid2) && (left_uid2 == right_uid1)) {
+                 // We found a match!
+                 merger->query_one++;
+                 printf("MERGE: %d\n", merger->query_one);
+                 // Advance both buffer positions - we can take a look at the next elements
+                 merger->current_input_buffer_positions[0]++;
+                 merger->current_input_buffer_positions[1]++;
+
+
+                 // Place values in output buffer
+                merger->output_buffer [merger->current_output_buffer_position].UID1=left_uid1;
+                merger->output_buffer [merger->current_output_buffer_position].UID2=left_uid2;
+                merger->current_output_buffer_position++;
+
+                  
+            } else if (left_uid1 != right_uid2) {
+                 // We couldn't find a match for this UID1
+                 if ((left_uid1 < right_uid2) || (left_uid2 < right_uid1)) {
+                     // Right pointer 
+                     merger->current_input_buffer_positions[0]++;
+                 } else {
+                     merger->current_input_buffer_positions[1]++;
+                 }
+             }
+
+        } else {
+            // Advance the buffer position b/c we don't want to look at when UID1 > UID2
+            merger->current_input_buffer_positions[0]++;
+        } 
+
+        if (merger->current_output_buffer_position == merger->output_buffer_capacity) {
+            if (flush_output_buffer(merger) != SUCCESS) {
+                return FAILURE;
+            }
+        }
+    }
+
+    //free(left);
+    //free(right);
+    printf("SOMETHING %d\n", merger->query_one);
+    clean_up_everything(merger);
+    return SUCCESS;
 }
 
 
@@ -134,9 +209,18 @@ int init_merge (MergeManager * manager) {
         char file_num[3 * sizeof(int)];
         char *filename = calloc(15, sizeof(char));
         sprintf(file_num, "%d", manager->input_file_numbers[i]);
-        strncpy(filename, manager->input_prefix, 6 * sizeof(char)); 
-        strncpy(filename + 6, file_num, 3 * sizeof(char));
-        strncpy(filename + 10, ".dat", 4 * sizeof(char));
+        if (manager->query == 0) {
+            strncpy(filename, manager->input_prefix, 6);
+            strncpy(filename + 6, file_num, 3 * sizeof(char));
+            strncpy(filename + 10, ".dat", 4 * sizeof(char));
+        } else  if (manager->query == 1) {
+            strncpy(filename, manager->input_prefix, 13);
+            strncpy(filename + 13, file_num, 2 * sizeof(char));
+        }
+
+      //  strncpy(filename, manager->input_prefix, 6 * sizeof(char)); 
+       // strncpy(filename + 6, file_num, 3 * sizeof(char));
+       // strncpy(filename + 10, ".dat", 4 * sizeof(char));
 
         FILE *file = fopen(filename, "rb");
         if (!file) 
@@ -196,17 +280,19 @@ int flush_output_buffer (MergeManager * manager) {
 
 int get_next_input_element(MergeManager * manager, int file_number, Record *result) {
     // If the position has moved to the end 
-    if (manager->current_input_buffer_positions[file_number] == manager->total_input_buffer_elements[file_number]) 
+    if (manager->current_input_buffer_positions[file_number] >= manager->total_input_buffer_elements[file_number]) 
     {
         manager->current_input_buffer_positions[file_number] = 0;
         int refill = refill_buffer(manager, file_number);
         if (refill != SUCCESS)
         {
+             printf("refill failed\n");
              return FAILURE;
         } else {
              // Check if run is complete
              if (manager->current_input_file_positions[file_number] == -1)
              {
+                 printf("empty\n");
                  return EMPTY;
              }
         } 
@@ -223,9 +309,14 @@ int refill_buffer (MergeManager * manager, int file_number) {
     char file_num[3 * sizeof(int)];
     sprintf(file_num, "%d", manager->input_file_numbers[file_number]);
     char *filename = calloc(15, sizeof(char)); 
-    strncpy(filename, "sorted", 6);
-    strncpy(filename + 6, file_num, 3 * sizeof(char));
-    strncpy(filename + 10, ".dat", 4 * sizeof(char));
+    if (manager->query == 0) {
+        strncpy(filename, "sorted", 6);
+        strncpy(filename + 6, file_num, 3 * sizeof(char));
+        strncpy(filename + 10, ".dat", 4 * sizeof(char));
+    } else  if (manager->query == 1) {
+        strncpy(filename, manager->input_prefix, 13);
+        strncpy(filename + 13, file_num, 2 * sizeof(char));
+    }
     file = fopen(filename, "rb");
     if (!file) 
     {
@@ -242,9 +333,13 @@ int refill_buffer (MergeManager * manager, int file_number) {
     if (bytes_read > 0)
     {
         manager->current_input_file_positions[file_number] += bytes_read;
+       /* if (file_number == 0) {
+            printf("BYTES %d\n", manager->current_input_file_positions[file_number]);
+        }*/
         manager->total_input_buffer_elements[file_number] = bytes_read;
     } else if (bytes_read == 0)
     {
+        printf("Was reading %s\n", filename);
         // Run is complete so set it to -1
         manager->current_input_file_positions[file_number] = -1;
     } else {
@@ -269,6 +364,11 @@ void clean_up (MergeManager * merger) {
     // Free output buffer
     free(merger->output_buffer); 
     // Free the merger manager itself
+//    free(merger);
+}
+
+void clean_up_everything(MergeManager *merger) {
+    clean_up(merger);
     free(merger);
 }
 
