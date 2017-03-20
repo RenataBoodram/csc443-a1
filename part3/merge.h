@@ -17,6 +17,18 @@ typedef struct record {
 	int UID2;
 } Record;
 
+typedef struct record_query2 {
+    int UID;
+    int deg;
+} Record2;
+
+typedef struct full_query2 {
+    int UID;
+//    int indeg;
+//    int outdeg;
+    int famedeg;
+} FullRecord;
+
 typedef struct HeapElement {
 	int UID1;
 	int UID2;
@@ -25,6 +37,8 @@ typedef struct HeapElement {
 
 enum {
     rec_size = sizeof(Record),
+    rec2_size = sizeof(Record2),
+    recfull_size = sizeof(FullRecord),
     entire_mem = 209715200,
     blk_size = 8192,  
 };
@@ -51,6 +65,7 @@ typedef struct merge_manager {
 	int *input_file_numbers;  //we need to know the run id to read from the corresponding run	
 	FILE *outputFP; //flushes output from output buffer 
 	Record *output_buffer; //buffer to store output elements until they are flushed to disk
+        FullRecord *output_buffer_two;
 	int current_output_buffer_position;  //where to add element in the output buffer
 	int output_buffer_capacity; //how many elements max can it hold
 	Record **input_buffers; //array of buffers to buffer part of runs
@@ -68,8 +83,10 @@ typedef struct merge_manager {
         int query_two;
 }MergeManager;
 
+
 //int query_one_setup(MergeManager *merger);
 int query_one_setup(MergeManager *manager, int num_chunks);
+int query_two_setup();
 
 //1. main loop
 int merge_runs (MergeManager * manager); 
@@ -100,6 +117,7 @@ void clean_up_everything(MergeManager *merger);
 int compare_heap_elements (HeapElement *a, HeapElement *b, int sortedby);
 
 int query_one(MergeManager *merger);
+int query_two(MergeManager *merger);
 
 int distribution(char *input_file, char *output_file, int degree);
 

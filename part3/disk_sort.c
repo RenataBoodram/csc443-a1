@@ -36,36 +36,38 @@ int compare_uid2 (const void *a, const void *b)
     if (a_uid2 == b_uid2) {
         return (a_uid1 - b_uid1);
     }
+
     return (a_uid2 - b_uid2);
 }
 
-//int main(int argc, char *argv[]) 
-int disk_sort(char *input_file, int sortby)
+int compare_fame (const void *a, const void *b)
 {
-/*
-    const char *usage_msg = "Usage: disk_sort <name of the input file> <total " 
-        "mem in bytes> <block_size>\n";
-    char *input_file;
-    int total_mem = 0;
-    int block_size = 0;
+    int a_uid1 = ((const Record*)a)->UID1;
+    int a_uid2 = ((const Record*)a)->UID2;
+    int b_uid1 = ((const Record*)b)->UID1;
+    int b_uid2 = ((const Record*)b)->UID2;
 
-    if (argc != 4)
-    {
-        printf("%s", usage_msg);
-        exit(1);
-    } else {
-        input_file = argv[1];
-        total_mem = (int) strtol(argv[2], (char **)NULL, 10);
-        block_size = (int) strtol(argv[3], (char **)NULL, 10);
-
-        if(block_size % rec_size != 0)
-        {
-            printf("%d is not a valid block size. Must be a multiple of 8.\n",
-                block_size);
-            exit(1);
-        } 
+    // Also need to make sure UID2s are in correct order
+    if (a_uid2 == b_uid2) {
+        return (b_uid1 - a_uid1);
     }
+
+    return (b_uid2 - a_uid2);
+}
+
+/*
+int compare_fame (const void *a, const void *b)
+{
+    int a_deg = ((const Record2*)a)->famedeg;
+    int b_deg = ((const Record2*)b)->famedeg;
+    return (b_deg - a_deg);
+}
 */
+
+
+//int main(int argc, char *argv[]) 
+int disk_sort(char *input_file, int sortby, int query)
+{
     // Hard code total amount of memory and block size
     int total_mem = 209715200;
     int block_size = 8192;
@@ -132,11 +134,13 @@ int disk_sort(char *input_file, int sortby)
         if (curr_run != (num_chunks - 1) || (is_leftover_bytes == 0)) 
         {
             handle_fread_fwrite(total_recs_in_mem, "fread", buffer, rec_size, total_recs_in_mem, file); 
-            if (sortby == 1)
+            if ((sortby == 1) && (query != 3))
             {
                 qsort(buffer, total_recs_in_mem, rec_size, compare_uid1);
-            } else {
+            } else if ((sortby != 1) && (query != 3))  {
                 qsort(buffer, total_recs_in_mem, rec_size, compare_uid2);
+            } else {
+                qsort(buffer, total_recs_in_mem, rec_size, compare_fame);
             }
             fwrite(buffer, rec_size, total_recs_in_mem, file_write);
         } else if ((curr_run == (num_chunks - 1)) && (is_leftover_bytes != 0))
@@ -162,11 +166,13 @@ int disk_sort(char *input_file, int sortby)
             /* Only sort the number of records leftover (we don't want to sort
              * any 0 records.
              */
-            if (sortby == 1) 
+            if ((sortby == 1) && query != 3) 
             {
                 qsort(buffer, bytes_read, rec_size, compare_uid1);
-            } else {
+            } else if ((sortby != 1) && query != 3)  {
                 qsort(buffer, bytes_read, rec_size, compare_uid2);
+            } else {
+                qsort(buffer, total_recs_in_mem, rec_size, compare_fame);
             }
             fwrite(buffer, rec_size, bytes_read, file_write);
         }
@@ -225,18 +231,143 @@ int disk_sort(char *input_file, int sortby)
     manager->output_buffer = (Record *)calloc(manager->output_buffer_capacity, rec_size); 
     manager->current_output_buffer_position = 0; // Starts here
 
-    if (sortby == 1) {
-        strcpy(manager->output_file_name, "entire_sorted1.dat");
+    if (sortby == 1 && query != 3) {
+        strcpy(manager->output_file_name, "entire_sorted1");
+    } else if (query !=3) {
+        strcpy(manager->output_file_name, "entire_sorted2");
     } else {
-        strcpy(manager->output_file_name, "entire_sorted2.dat");
+        strcpy(manager->output_file_name, "q2.dat");
     }
     strcpy(manager->input_prefix, "sorted");
 
 
     manager->current_heap_size = 0;
     manager->sortedby = sortby; // Added field to sort the heap by
-    
+    manager->query = 0;
+
+    if (query == 3) {
+        manager->output_buffer_capacity = 10;
+        manager->query_two = 1;
+    }
+
     merge_runs(manager);
+   
+
+    if (query == 1) {
+        query_one_setup(manager, 2);
+    }
     
-    return 0;     
+    return num_chunks;     
+}
+
+int query_one_setup(MergeManager *manager, int num_chunks) {
+    if (num_chunks == -1) {
+        manager->heap_capacity = 2;
+    } else {
+        manager->heap_capacity = num_chunks;
+    }
+    int heap_cap = manager->heap_capacity;
+
+    int input_file_numbers[heap_cap];
+    int current_input_file_positions[heap_cap];
+    int total_input_buffer_elements[heap_cap];
+    int current_input_buffer_positions[heap_cap];
+//Record **input_buffers = calloc(heap_cap, rec_size);
+    Record **input_buffers = calloc(heap_cap, sizeof(Record *));
+
+    int recs_per_block = blk_size/rec_size;
+    int blocks_in_mem = entire_mem/blk_size;
+    // +1 for final output buffer
+    int recs_per_buffer = recs_per_block * (blocks_in_mem / (heap_cap + 1));
+    manager->input_buffer_capacity = recs_per_buffer;
+    manager->output_buffer_capacity = recs_per_buffer;
+    manager->output_buffer = (Record *)calloc(manager->output_buffer_capacity, rec_size);
+    manager->current_output_buffer_position = 0; // Starts here
+    
+
+    int i = 0;
+    while (i < heap_cap)
+    {
+        if (num_chunks == -1) {
+            input_file_numbers[i] = i;
+        } else {
+            input_file_numbers[i] = (i + 1);
+        }
+        current_input_file_positions[i] = 0;
+        current_input_buffer_positions[i] = 0;
+        total_input_buffer_elements[i] = 0;
+        input_buffers[i] = (Record *)calloc(manager->input_buffer_capacity, rec_size);
+        i = i + 1;
+    }
+    manager->input_file_numbers = input_file_numbers;
+    manager->current_input_file_positions = current_input_file_positions;
+    manager->current_input_buffer_positions = current_input_buffer_positions;
+    manager->total_input_buffer_elements = total_input_buffer_elements;
+    manager->input_buffers = input_buffers;
+
+    manager->query = 1;
+    manager->query_one = 0;
+
+    strcpy(manager->input_prefix, "entire_sorted");
+    strcpy(manager->output_file_name, "q1.dat");
+
+    if (num_chunks != -1) { 
+
+        query_one(manager);
+    }
+
+    return 0;
+    
+}
+
+int query_two_setup() {
+    MergeManager *manager = (MergeManager *)malloc(sizeof(MergeManager));
+
+    query_one_setup(manager, -1);
+
+    manager->query = 2;
+
+    free(manager->output_buffer);
+    int remaining_mem = entire_mem - (manager->input_buffer_capacity * rec_size * 2);
+    int blks_in_remain = remaining_mem / blk_size;
+    int full_per_blk = blk_size/recfull_size;
+    manager->output_buffer_capacity = full_per_blk * blks_in_remain; 
+    
+    manager->output_buffer_two = (FullRecord *)calloc(manager->output_buffer_capacity, recfull_size);
+
+    manager->current_output_buffer_position = 0; // Starts here
+
+    int heap_cap = manager->heap_capacity;
+
+    int input_file_numbers[heap_cap];
+    int current_input_file_positions[heap_cap];
+    int total_input_buffer_elements[heap_cap];
+    int current_input_buffer_positions[heap_cap];
+
+
+    int i = 0;
+    while (i < heap_cap)
+    {
+        input_file_numbers[i] = i;
+        current_input_file_positions[i] = 0;
+        current_input_buffer_positions[i] = 0;
+        total_input_buffer_elements[i] = 0;
+    //    input_buffers[i] = (Record *)calloc(manager->input_buffer_capacity, rec_size);
+        i = i + 1;
+    }
+    manager->input_file_numbers = input_file_numbers;
+    manager->current_input_file_positions = current_input_file_positions;
+    manager->current_input_buffer_positions = current_input_buffer_positions;
+    manager->total_input_buffer_elements = total_input_buffer_elements;
+//    manager->input_buffers = input_buffers;
+
+
+
+    strcpy(manager->input_prefix, "inorout");
+    strcpy(manager->output_file_name, "temp.dat");
+
+
+    query_two(manager);
+
+    return 0;
 }

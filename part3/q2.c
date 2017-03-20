@@ -15,10 +15,10 @@ int main(int argc, char *argv[]) {
         orig_input_file = argv[1];
     }
 
-    //int num_chunks = 0; 
-    
-    // Sort the file by UID1
-    disk_sort(orig_input_file, 1, 0);
+    // Sort the file by UID1 - it will write "out.dat" containing out-degrees
+    disk_sort(orig_input_file, 1, 2);
+    // Get out-degrees
+    distribution("entire_sorted1", "inorout0", 0);
 
     // Delete intermediate sorted files
 
@@ -33,18 +33,22 @@ int main(int argc, char *argv[]) {
 
     // Sort the file by UID2
     // Pass in 1 to run Q1
-    disk_sort(orig_input_file, 2, 1);
+    // Sort the file by UID2 -  it will write "in.dat" containing in-degrees
+    disk_sort(orig_input_file, 2, 2);
+    // Get in-degree
+    distribution("entire_sorted2", "inorout1", 1);
+    ret_val = system(cmd);
 
-/*
+    // Join based on 
+    query_two_setup();
+    disk_sort("temp.dat", 2, 3);
 
-    // Uncomment for testing - when entire_sorted1 and entire_sorted2 have already 
-    // been produced in a prior run
-
-    MergeManager *manager = (MergeManager *)malloc(sizeof(MergeManager));
-    manager->heap_capacity = 2;
-manager->heap = (HeapElement *)calloc(2, sizeof(HeapElement));
-    query_one_setup(manager, 2);
-*/
+    strcpy(cmd, "rm -f entire_sorted*");
+    ret_val = system(cmd);
+    strcpy(cmd, "rm -f temp.dat");
+    ret_val = system(cmd);
     
+
     return 0;
 }
+
