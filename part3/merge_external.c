@@ -76,22 +76,23 @@ int query_one(MergeManager *merger) {
     Record right;
     // While the run is not complete
 
+
     int result = SUCCESS;
-    while (merger->current_input_file_positions[0] != -1 || merger->current_input_file_positions[1] != -1) 
+    int result2 = SUCCESS;
+    // While run is not done
+    while (merger->current_input_file_positions[0] != -1 && merger->current_input_file_positions[1] != -1) 
     {
         // Get the elements from the left and right relation
-
-        if ((result = get_next_input_element(merger, 0, &left)) == FAILURE) {
+        if (((result = get_next_input_element(merger, 0, &left)) == FAILURE)) {
              return FAILURE;
         } else if (result == EMPTY) {
              break; 
         }
-        if ((result = get_next_input_element(merger, 1, &right)) == FAILURE) {
+        if ((result2 = get_next_input_element(merger, 1, &right)) == FAILURE) {
              return FAILURE;
-        } else if (result == EMPTY) {
+        } else if (result2 == EMPTY) {
             break;
-        }
-       
+        } 
         int left_UID1 = left.UID1;
         int left_UID2 = left.UID2;
         int right_UID1 = right.UID1;
@@ -112,11 +113,17 @@ int query_one(MergeManager *merger) {
                 merger->output_buffer [merger->current_output_buffer_position].UID2=left_UID2;
                 merger->current_output_buffer_position++;
             } else {
-                 if ((left_UID1 < right_UID2) || (left_UID2 < right_UID1)) {
+                 if ((left_UID1 < right_UID2)) {
                      merger->current_input_buffer_positions[0]++;
-                 } else if ((left_UID1 >= right_UID2) || (left_UID2 >= right_UID1)) {
+                 } else if (left_UID1 > right_UID2) {
+                     merger->current_input_buffer_positions[1]++;
+                 } else if (left_UID2 < right_UID1) {
+                     merger->current_input_buffer_positions[0]++;
+                 } else {
                      merger->current_input_buffer_positions[1]++;
                  }
+                     
+                
              }
        } else {
            merger->current_input_buffer_positions[0]++;
@@ -130,6 +137,8 @@ int query_one(MergeManager *merger) {
         }
     }
 
+  
+
    if(merger->current_output_buffer_position > 0) {
        if(flush_output_buffer(merger)!=SUCCESS) {
            return FAILURE;
@@ -142,7 +151,6 @@ int query_one(MergeManager *merger) {
     }
     clean_up_everything(merger);
     return SUCCESS;
-
 }
 
 int query_two(MergeManager *merger) {
