@@ -43,6 +43,8 @@ int main(int argc, char *argv[]) {
     query_two_setup();
     disk_sort("temp.dat", 2, 3);
 
+    strcpy(cmd, "rm -f inorout*");
+    ret_val = system(cmd);
     strcpy(cmd, "rm -f entire_sorted*");
     ret_val = system(cmd);
     strcpy(cmd, "rm -f temp.dat");

@@ -1,3 +1,4 @@
+# NOTE: This Makefile is ONLY for the compilation of the changed files from Assignment 1.1
 SOURCES = write_blocks_seq #write_lines read_blocks_seq read_ram_seq read_blocks_rand read_ram_rand write_blocks_rand write_ram_rand
 
 all : utils $(SOURCES)
